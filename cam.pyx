@@ -24,9 +24,7 @@
 # SUCH DAMAGE.
 #
 
-
 cimport defs
-from libc.stdlib cimport free
 
 
 cdef class CamDevice(object):

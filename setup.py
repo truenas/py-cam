@@ -24,17 +24,30 @@
 # SUCH DAMAGE.
 #
 
-import platform
+import os
 from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Build import cythonize
 
 
+system_includes = [
+    "${FREEBSD_SRC}/sys",
+]
+
+system_includes = [os.path.expandvars(x) for x in system_includes]
+
+
 extensions = [
     Extension(
-       "cam",
-       ["cam.pyx"],
-       extra_link_args=["-lcam"]
+        "cam",
+        ["cam.pyx"],
+        extra_link_args=["-lcam"],
+        include_dirs=system_includes
+    ),
+    Extension(
+        "ctl",
+        ["ctl.pyx"],
+        include_dirs=system_includes
     )
 ]
 

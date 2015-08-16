@@ -64,3 +64,85 @@ cdef extern from "camlib.h":
 
     cdef cam_device* cam_open_device(char* path, int flags)
     cdef void cam_close_device(cam_device* dev)
+
+
+
+cdef extern from "cam/ctl/ctl.h":
+    pass
+
+
+
+cdef extern from "cam/ctl/ctl_io.h":
+    pass
+
+
+cdef extern from "cam/ctl/ctl_frontend_internal.h":
+    pass
+
+
+cdef extern from "cam/ctl/ctl_backend.h":
+    pass
+
+
+cdef extern from "cam/ctl/ctl_ioctl.h":
+    enum:
+        CTL_ERROR_STR_LEN
+        
+    enum:
+        CTL_IO
+        CTL_ENABLE_PORT
+        CTL_DISABLE_PORT
+        CTL_DUMP_OOA
+        CTL_CHECK_OOA
+        CTL_HARD_STOP
+        CTL_HARD_START
+        CTL_DELAY_IO
+        CTL_REALSYNC_GET
+        CTL_REALSYNC_SET
+        CTL_SETSYNC
+        CTL_GETSYNC
+        CTL_GETSTATS
+        CTL_ERROR_INJECT
+        CTL_BBRREAD
+        CTL_GET_OOA
+        CTL_DUMP_STRUCTS
+        CTL_GET_PORT_LIST
+        CTL_LUN_REQ
+        CTL_LUN_LIST
+        CTL_ERROR_INJECT_DELETE
+        CTL_SET_PORT_WWNS
+        CTL_ISCSI
+        CTL_PORT_REQ
+        CTL_PORT_LIST
+        CTL_LUN_MAP            
+
+    ctypedef enum ctl_iscsi_status:
+        CTL_ISCSI_OK
+        CTL_ISCSI_ERROR
+        CTL_ISCSI_LIST_NEED_MORE_SPACE
+        CTL_ISCSI_SESSION_NOT_FOUND
+
+    ctypedef enum ctl_iscsi_type:
+        CTL_ISCSI_HANDOFF
+        CTL_ISCSI_LIST
+        CTL_ISCSI_LOGOUT
+        CTL_ISCSI_TERMINATE
+        CTL_ISCSI_LISTEN
+        CTL_ISCSI_ACCEPT
+        CTL_ISCSI_SEND
+        CTL_ISCSI_RECEIVE
+
+    cdef struct ctl_iscsi_list_params:
+        uint32_t alloc_len
+        char* conn_xml
+        uint32_t fill_len
+        int	spare[4]
+
+    cdef union ctl_iscsi_data:
+        ctl_iscsi_list_params list
+
+    cdef struct ctl_iscsi:
+        ctl_iscsi_type type
+        ctl_iscsi_data data
+        ctl_iscsi_status status
+        char error_str[CTL_ERROR_STR_LEN]

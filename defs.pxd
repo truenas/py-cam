@@ -71,7 +71,6 @@ cdef extern from "cam/ctl/ctl.h":
     pass
 
 
-
 cdef extern from "cam/ctl/ctl_io.h":
     pass
 

@@ -76,10 +76,6 @@ cdef extern from "cam/ctl/ctl_io.h":
     pass
 
 
-cdef extern from "cam/ctl/ctl_frontend_internal.h":
-    pass
-
-
 cdef extern from "cam/ctl/ctl_backend.h":
     pass
 

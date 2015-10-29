@@ -1,3 +1,4 @@
+# cython: c_string_type=unicode, c_string_encoding=ascii
 #-
 # Copyright (c) 2015 iXsystems, Inc.
 # All rights reserved.
@@ -31,7 +32,6 @@ cdef class CamDevice(object):
     cdef defs.cam_device* dev
 
     def __init__(self, path):
-        path = path.encode('ascii')
         self.dev = defs.cam_open_device(path, defs.O_RDWR)
         if self.dev == NULL:
             raise RuntimeError('Cannot open device')

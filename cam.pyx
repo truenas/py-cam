@@ -31,6 +31,7 @@ cdef class CamDevice(object):
     cdef defs.cam_device* dev
 
     def __init__(self, path):
+        path = path.encode('ascii')
         self.dev = defs.cam_open_device(path, defs.O_RDWR)
         if self.dev == NULL:
             raise RuntimeError('Cannot open device')
@@ -56,7 +57,7 @@ cdef class CamDevice(object):
 
     property controller_name:
         def __get__(self):
-            return self.dev.sim_name
+            return self.dev.sim_name.decode('ascii')
 
     property controller_unit:
         def __get__(self):

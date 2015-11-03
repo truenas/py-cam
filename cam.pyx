@@ -57,7 +57,7 @@ cdef class CamDevice(object):
 
     property controller_name:
         def __get__(self):
-            return self.dev.sim_name.decode('ascii')
+            return self.dev.sim_name
 
     property controller_unit:
         def __get__(self):

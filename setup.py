@@ -24,6 +24,8 @@
 # SUCH DAMAGE.
 #
 
+import Cython.Compiler.Options
+Cython.Compiler.Options.annotate = True
 import os
 from distutils.core import setup
 from distutils.extension import Extension
@@ -55,5 +57,8 @@ extensions = [
 setup(
     name='cam',
     version='1.0',
+    packages=[''],
+    package_dir={'': ''},
+    package_data={'': ['*.html', '*.c']},
     ext_modules=cythonize(extensions)
 )

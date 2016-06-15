@@ -57,8 +57,6 @@ extensions = [
 setup(
     name='cam',
     version='1.0',
-    packages=[''],
-    package_dir={'': ''},
     package_data={'': ['*.html', '*.c']},
     ext_modules=cythonize(extensions)
 )

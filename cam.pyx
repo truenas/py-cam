@@ -42,12 +42,12 @@ cdef class CamDevice(object):
 
     def __getstate__(self):
         return {
-            'controller-name': self.controller_name,
-            'controller-unit': self.controller_unit,
-            'bus-id': self.bus_id,
-            'target-id': self.target_id,
-            'target-lun': self.target_lun,
-            'path-id': self.path_id,
+            'controller_name': self.controller_name,
+            'controller_unit': self.controller_unit,
+            'bus_id': self.bus_id,
+            'target_id': self.target_id,
+            'target_lun': self.target_lun,
+            'path_id': self.path_id,
             'serial': self.serial
         }
 

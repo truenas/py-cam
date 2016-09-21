@@ -64,7 +64,488 @@ cdef extern from "camlib.h":
 
     cdef cam_device* cam_open_device(char* path, int flags)
     cdef void cam_close_device(cam_device* dev)
+    cdef ccb *cam_getccb(cam_device* dev)
+    cdef int cam_send_ccb(cam_device* dev, ccb* ccb)
 
+
+cdef extern from "cam/cam_ccb.h":
+    cdef struct ccb_hdr:
+        uint32_t status
+        uint32_t flags
+        uint32_t xflags
+
+    cdef struct ccb_scsiio:
+        pass
+
+    cdef union ccb:
+        ccb_hdr ccb_h
+
+
+cdef extern from "cam/scsi/scsi_all.h":
+    ctypedef void * ccb_callback_t
+
+    cdef struct scsi_read_capacity_data:
+        uint8_t addr[4]
+        uint8_t length[4]
+
+    cdef struct scsi_report_luns_data:
+        uint8_t length[4]
+        uint8_t reserved[4]
+
+    void scsi_test_unit_ready(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_request_sense(
+        ccb_scsiio *csio, uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        void *data_ptr,
+        uint8_t dxfer_len,
+        uint8_t tag_action,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_inquiry(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        uint8_t *inq_buf,
+        uint32_t inq_len,
+        int evpd,
+        uint8_t page_code,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_mode_sense(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        int dbd,
+        uint8_t page_code,
+        uint8_t page,
+        uint8_t *param_buf,
+        uint32_t param_len,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_mode_sense_len(
+        ccb_scsiio *csio, uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        int dbd,
+        uint8_t page_code,
+        uint8_t page,
+        uint8_t *param_buf,
+        uint32_t param_len,
+        int minimum_cmd_size,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_mode_select(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        int scsi_page_fmt,
+        int save_pages,
+        uint8_t *param_buf,
+        uint32_t param_len,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_mode_select_len(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        int scsi_page_fmt,
+        int save_pages,
+        uint8_t *param_buf,
+        uint32_t param_len,
+        int minimum_cmd_size,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_log_sense(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        uint8_t page_code,
+        uint8_t page,
+        int save_pages,
+        int ppc,
+        uint32_t paramptr,
+        uint8_t *param_buf,
+        uint32_t param_len,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_log_select(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        uint8_t page_code,
+        int save_pages,
+        int pc_reset,
+        uint8_t *param_buf,
+        uint32_t param_len,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_prevent(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        uint8_t action,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_read_capacity(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        scsi_read_capacity_data *,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_read_capacity_16(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        uint64_t lba,
+        int reladr,
+        int pmi,
+        uint8_t *rcap_buf,
+        int rcap_buf_len,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_report_luns(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        uint8_t select_report,
+        scsi_report_luns_data *rpl_buf,
+        uint32_t alloc_len,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_report_target_group(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        uint8_t pdf,
+        void *buf,
+        uint32_t alloc_len,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_set_target_group(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        void *buf,
+        uint32_t alloc_len,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_synchronize_cache(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        uint32_t begin_lba,
+        uint16_t lb_count,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_receive_diagnostic_results(
+        ccb_scsiio *csio, uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        int pcv,
+        uint8_t page_code,
+        uint8_t *data_ptr,
+        uint16_t allocation_length,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_send_diagnostic(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        int unit_offline,
+        int device_offline,
+        int self_test,
+        int page_format,
+        int self_test_code,
+        uint8_t *data_ptr,
+        uint16_t param_list_length,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_read_buffer(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        int mode,
+        uint8_t buffer_id,
+        uint32_t offset,
+        uint8_t *data_ptr,
+        uint32_t allocation_length,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_write_buffer(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        int mode,
+        uint8_t buffer_id,
+        uint32_t offset,
+        uint8_t *data_ptr,
+        uint32_t param_list_length,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    #define	SCSI_RW_READ	0x0001
+    #define	SCSI_RW_WRITE	0x0002
+    #define	SCSI_RW_DIRMASK	0x0003
+    #define	SCSI_RW_BIO	0x1000
+    void scsi_read_write(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        int readop,
+        uint8_t byte2,
+        int minimum_cmd_size,
+        uint64_t lba,
+        uint32_t block_count,
+        uint8_t *data_ptr,
+        uint32_t dxfer_len,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_write_same(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        uint8_t byte2,
+        int minimum_cmd_size,
+        uint64_t lba,
+        uint32_t block_count,
+        uint8_t *data_ptr,
+        uint32_t dxfer_len,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_ata_identify(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        uint8_t *data_ptr,
+        uint16_t dxfer_len,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_ata_trim(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        uint16_t block_count,
+        uint8_t *data_ptr,
+        uint16_t dxfer_len,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_ata_pass_16(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint32_t flags,
+        uint8_t tag_action,
+        uint8_t protocol,
+        uint8_t ata_flags,
+        uint16_t features,
+        uint16_t sector_count,
+        uint64_t lba,
+        uint8_t command,
+        uint8_t control,
+        uint8_t *data_ptr,
+        uint16_t dxfer_len,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_unmap(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        uint8_t byte2,
+        uint8_t *data_ptr,
+        uint16_t dxfer_len,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_start_stop(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        int start,
+        int load_eject,
+        int immediate,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_read_attribute(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        uint8_t service_action,
+        uint32_t element,
+        uint8_t elem_type,
+        int logical_volume,
+        int partition,
+        uint32_t first_attribute,
+        int cache,
+        uint8_t *data_ptr,
+        uint32_t length,
+        int sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_write_attribute(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        uint32_t element,
+        int logical_volume,
+        int partition,
+        int wtc,
+        uint8_t *data_ptr,
+        uint32_t length,
+        int sense_len,
+        uint32_t timeout
+    )
+
+    void scsi_security_protocol_in(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        uint32_t security_protocol,
+        uint32_t security_protocol_specific,
+        int byte4,
+        uint8_t *data_ptr,
+        uint32_t dxfer_len,
+        int sense_len,
+        int timeout
+    )
+
+    void scsi_security_protocol_out(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        uint32_t security_protocol,
+        uint32_t security_protocol_specific,
+        int byte4,
+        uint8_t *data_ptr,
+        uint32_t dxfer_len,
+        int sense_len,
+        int timeout
+    )
+
+    void scsi_persistent_reserve_in(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        int service_action,
+        uint8_t *data_ptr,
+        uint32_t dxfer_len,
+        int sense_len,
+        int timeout
+    )
+
+    void scsi_persistent_reserve_out(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        int service_action,
+        int scope,
+        int res_type,
+        uint8_t *data_ptr,
+        uint32_t dxfer_len,
+        int sense_len,
+        int timeout
+    )
+
+    void scsi_report_supported_opcodes(
+        ccb_scsiio *csio,
+        uint32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        int options,
+        int req_opcode,
+        int req_service_action,
+        uint8_t *data_ptr,
+        uint32_t dxfer_len,
+        int sense_len,
+        int timeout
+    )
 
 
 cdef extern from "cam/ctl/ctl.h":

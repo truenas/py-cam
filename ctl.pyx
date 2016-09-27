@@ -109,6 +109,70 @@ cdef class ISCSIConnection(object):
 
 
 
+cdef class CTLPort(object):
+    cdef CTL parent
+    cdef object xml
+
+    def __getstate__(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'frontend_type': self.frontend_type,
+            'online': self.online,
+            'physical_port': self.physical_port,
+            'virtual_port': self.virtual_port,
+            'target': self.target,
+            'luns': self.luns,
+            'initiators': self.initiators
+        }
+
+    property id:
+        def __get__(self):
+            return int(self.xml.attrib['id'])
+
+    property name:
+        def __get__(self):
+            return self.xml.find('port_name').text
+
+    property frontend_type:
+        def __get__(self):
+            return self.xml.find('frontend_type').text
+
+    property online:
+        def __get__(self):
+            return self.xml.find('online').text == 'YES'
+
+    property physical_port:
+        def __get__(self):
+            return int(self.xml.find('physical_port').text)
+
+    property virtual_port:
+        def __get__(self):
+            return int(self.xml.find('virtual_port').text)
+
+    property target:
+        def __get__(self):
+            node = self.xml.find('target')
+            return node.text if node else None
+
+    property luns:
+        def __get__(self):
+            result = {}
+            for i in self.xml.findall('lun'):
+                result[i.attrib['id']] = int(i.text)
+
+            return result
+
+
+    property initiators:
+        def __get__(self):
+            result = {}
+            for i in self.xml.findall('initiator'):
+                result[i.attrib['id']] = i.text
+
+            return result
+
+
 cdef class CTL(object):
     cdef int fd
 
@@ -125,6 +189,7 @@ cdef class CTL(object):
             cdef defs.ctl_iscsi req
             cdef char* buffer
             cdef int size = 4096
+            cdef int ret
 
             while True:
                 buffer = <char*>malloc(size)
@@ -133,7 +198,10 @@ cdef class CTL(object):
                 req.data.list.alloc_len = size
                 req.data.list.conn_xml = buffer
 
-                if ioctl(self.fd, defs.CTL_ISCSI, <void*>&req) != 0:
+                with nogil:
+                    ret = ioctl(self.fd, defs.CTL_ISCSI, <void*>&req)
+
+                if ret != 0:
                     raise OSError(errno, strerror(errno))
 
                 if req.status == defs.CTL_ISCSI_LIST_NEED_MORE_SPACE:
@@ -152,3 +220,41 @@ cdef class CTL(object):
                 conn.parent = self
                 conn.xml = i
                 yield conn
+
+    property ports:
+        def __get__(self):
+            cdef CTLPort port
+            cdef defs.ctl_lun_list req
+            cdef char* buffer
+            cdef int size = 4096
+            cdef int ret
+
+            while True:
+                buffer = <char*>malloc(size)
+                memset(&req, 0, cython.sizeof(req))
+                req.status = defs.CTL_LUN_LIST_NONE
+                req.alloc_len = size
+                req.lun_xml = buffer
+
+                with nogil:
+                    ret = ioctl(self.fd, defs.CTL_PORT_LIST, <void*>&req)
+
+                if ret != 0:
+                    raise OSError(errno, strerror(errno))
+
+                if req.status == defs.CTL_LUN_LIST_NEED_MORE_SPACE:
+                    size <<= 1
+                    free(buffer)
+                    continue
+
+                break
+
+            if req.status != defs.CTL_LUN_LIST_OK:
+                raise CTLError(req.error_str)
+
+            xml = etree.fromstring(buffer)
+            for i in xml.findall('targ_port'):
+                port = CTLPort.__new__(CTLPort)
+                port.parent = self
+                port.xml = i
+                yield port

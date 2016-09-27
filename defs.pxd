@@ -32,7 +32,7 @@ cdef extern from "fcntl.h":
         O_RDWR
 
 
-cdef extern from "camlib.h":
+cdef extern from "camlib.h" nogil:
     ctypedef int path_id_t
     ctypedef int lun_id_t
     ctypedef int target_id_t
@@ -81,7 +81,7 @@ cdef extern from "cam/cam_ccb.h":
         ccb_hdr ccb_h
 
 
-cdef extern from "cam/scsi/scsi_all.h":
+cdef extern from "cam/scsi/scsi_all.h" nogil:
     ctypedef void * ccb_callback_t
 
     cdef struct scsi_read_capacity_data:
@@ -557,7 +557,8 @@ cdef extern from "cam/ctl/ctl_io.h":
 
 
 cdef extern from "cam/ctl/ctl_backend.h":
-    pass
+    enum:
+        CTL_BE_NAME_LEN
 
 
 cdef extern from "cam/ctl/ctl_ioctl.h":
@@ -608,6 +609,12 @@ cdef extern from "cam/ctl/ctl_ioctl.h":
         CTL_ISCSI_SEND
         CTL_ISCSI_RECEIVE
 
+    ctypedef enum ctl_lun_list_status:
+        CTL_LUN_LIST_NONE
+        CTL_LUN_LIST_OK
+        CTL_LUN_LIST_NEED_MORE_SPACE
+        CTL_LUN_LIST_ERROR
+
     cdef struct ctl_iscsi_list_params:
         uint32_t alloc_len
         char* conn_xml
@@ -621,4 +628,12 @@ cdef extern from "cam/ctl/ctl_ioctl.h":
         ctl_iscsi_type type
         ctl_iscsi_data data
         ctl_iscsi_status status
+        char error_str[CTL_ERROR_STR_LEN]
+
+    cdef struct ctl_lun_list:
+        char backend[CTL_BE_NAME_LEN]
+        uint32_t alloc_len
+        char *lun_xml
+        uint32_t fill_len
+        ctl_lun_list_status status
         char error_str[CTL_ERROR_STR_LEN]

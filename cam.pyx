@@ -28,6 +28,19 @@
 cimport defs
 
 
+cdef class CamCCB(object):
+    cdef defs.ccb *ccb
+
+    def __init__(self):
+        pass
+
+    def scsi_read_write(self, **kwargs):
+        pass
+
+    def send(self):
+        pass
+
+
 cdef class CamDevice(object):
     cdef defs.cam_device* dev
 

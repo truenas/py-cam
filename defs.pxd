@@ -549,7 +549,27 @@ cdef extern from "cam/scsi/scsi_all.h" nogil:
 
 
 cdef extern from "cam/ctl/ctl.h":
-    pass
+    ctypedef enum ctl_port_type:
+        CTL_PORT_NONE
+        CTL_PORT_FC
+        CTL_PORT_SCSI
+        CTL_PORT_IOCTL
+        CTL_PORT_INTERNAL
+        CTL_PORT_ISCSI
+        CTL_PORT_SAS
+        CTL_PORT_ALL
+        CTL_PORT_ISC
+
+    cdef struct ctl_port_entry:
+        ctl_port_type port_type
+        char port_name[64]
+        int32_t targ_port
+        int physical_port
+        int virtual_port
+        u_int flags
+        uint64_t wwnn
+        uint64_t wwpn
+        int online
 
 
 cdef extern from "cam/ctl/ctl_io.h":

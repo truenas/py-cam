@@ -24,6 +24,7 @@
 # SUCH DAMAGE.
 #
 
+import enum
 import os
 import cython
 from xml.etree import ElementTree as etree
@@ -106,6 +107,18 @@ cdef class ISCSIConnection(object):
     property iser:
         def __get__(self):
             return int(self.xml.find('iser').text)
+
+
+class CTLPortType(enum.IntEnum):
+    NONE = defs.CTL_PORT_NONE
+    FC = defs.CTL_PORT_FC
+    SCSI = defs.CTL_PORT_SCSI
+    IOCTL = defs.CTL_PORT_IOCTL
+    INTERNAL = defs.CTL_PORT_INTERNAL
+    ISCSI = defs.CTL_PORT_ISCSI
+    SAS = defs.CTL_PORT_SAS
+    ALL = defs.CTL_PORT_ALL
+    ISC = defs.CTL_PORT_ISC
 
 
 

@@ -121,7 +121,6 @@ class CTLPortType(enum.IntEnum):
     ISC = defs.CTL_PORT_ISC
 
 
-
 cdef class CTLPort(object):
     cdef CTL parent
     cdef object xml
@@ -130,6 +129,7 @@ cdef class CTLPort(object):
         return {
             'id': self.id,
             'name': self.name,
+            'type': self.type.name,
             'frontend_type': self.frontend_type,
             'online': self.online,
             'physical_port': self.physical_port,
@@ -146,6 +146,11 @@ cdef class CTLPort(object):
     property name:
         def __get__(self):
             return self.xml.find('port_name').text
+
+    property type:
+        def __get__(self):
+            type = int(self.xml.find('port_type').text)
+            return CTLPortType(type)
 
     property frontend_type:
         def __get__(self):
@@ -175,7 +180,6 @@ cdef class CTLPort(object):
                 result[i.attrib['id']] = int(i.text)
 
             return result
-
 
     property initiators:
         def __get__(self):

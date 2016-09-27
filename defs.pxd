@@ -566,7 +566,7 @@ cdef extern from "cam/ctl/ctl.h":
         int32_t targ_port
         int physical_port
         int virtual_port
-        u_int flags
+        unsigned int flags
         uint64_t wwnn
         uint64_t wwpn
         int online

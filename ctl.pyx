@@ -189,6 +189,32 @@ cdef class CTLPort(object):
 
             return result
 
+    def enable(self):
+        cdef defs.ctl_port_entry req
+        cdef int ret
+
+        req.port_type = int(self.type)
+        req.targ_port = self.id
+
+        with nogil:
+            ret = ioctl(self.parent.fd, defs.CTL_ENABLE_PORT, &req)
+
+        if ret != 0:
+            raise OSError(errno, strerror(errno))
+
+    def disable(self):
+        cdef defs.ctl_port_entry req
+        cdef int ret
+
+        req.port_type = int(self.type)
+        req.targ_port = self.id
+
+        with nogil:
+            ret = ioctl(self.parent.fd, defs.CTL_DISABLE_PORT, &req)
+
+        if ret != 0:
+            raise OSError(errno, strerror(errno))
+
 
 cdef class CTL(object):
     cdef int fd

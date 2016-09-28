@@ -345,10 +345,12 @@ cdef extern from "cam/scsi/scsi_all.h" nogil:
         uint32_t timeout
     )
 
-    #define	SCSI_RW_READ	0x0001
-    #define	SCSI_RW_WRITE	0x0002
-    #define	SCSI_RW_DIRMASK	0x0003
-    #define	SCSI_RW_BIO	0x1000
+    enum:
+        SCSI_RW_READ
+        SCSI_RW_WRITE
+        SCSI_RW_DIRMASK
+        SCSI_RW_BIO
+
     void scsi_read_write(
         ccb_scsiio *csio,
         uint32_t retries,
@@ -657,3 +659,70 @@ cdef extern from "cam/ctl/ctl_ioctl.h":
         uint32_t fill_len
         ctl_lun_list_status status
         char error_str[CTL_ERROR_STR_LEN]
+
+
+cdef extern from "cam/scsi/scsi_enc.h":
+    enum:
+        ENCIOC_GETNELM
+        ENCIOC_GETELMMAP
+        ENCIOC_GETENCSTAT
+        ENCIOC_SETENCSTAT
+        ENCIOC_GETELMSTAT
+        ENCIOC_SETELMSTAT
+        ENCIOC_GETTEXT
+        ENCIOC_INIT
+        ENCIOC_GETELMDESC
+        ENCIOC_GETELMDEVNAMES
+        ENCIOC_GETSTRING
+        ENCIOC_SETSTRING
+        ENCIOC_GETENCNAME
+        ENCIOC_GETENCID
+
+    ctypedef enum elm_type_t:
+        ELMTYP_UNSPECIFIED
+        ELMTYP_DEVICE
+        ELMTYP_POWER
+        ELMTYP_FAN
+        ELMTYP_THERM
+        ELMTYP_DOORLOCK
+        ELMTYP_ALARM
+        ELMTYP_ESCC
+        ELMTYP_SCC
+        ELMTYP_NVRAM
+        ELMTYP_INV_OP_REASON
+        ELMTYP_UPS
+        ELMTYP_DISPLAY
+        ELMTYP_KEYPAD
+        ELMTYP_ENCLOSURE
+        ELMTYP_SCSIXVR
+        ELMTYP_LANGUAGE
+        ELMTYP_COMPORT
+        ELMTYP_VOM
+        ELMTYP_AMMETER
+        ELMTYP_SCSI_TGT
+        ELMTYP_SCSI_INI
+        ELMTYP_SUBENC
+        ELMTYP_ARRAY_DEV
+        ELMTYP_SAS_EXP
+        ELMTYP_SAS_CONN
+
+    cdef struct encioc_element:
+        unsigned int elm_idx
+        unsigned int elm_subenc_id
+        elm_type_t elm_type
+
+    cdef struct encioc_elm_status:
+        unsigned int elm_idx
+        unsigned char cstat[4]
+
+    cdef struct encioc_elm_desc:
+        unsigned int elm_idx
+        uint16_t elm_desc_len
+        char *elm_desc_str
+
+    cdef struct encioc_elm_devnames:
+        unsigned int elm_idx
+        size_t elm_names_size
+        size_t elm_names_len
+        char *elm_devnames
+

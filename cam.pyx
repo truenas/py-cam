@@ -154,18 +154,40 @@ cdef class CamDevice(object):
 cdef class CamEnclosureElement(object):
     cdef readonly object type
     cdef readonly object description
-    cdef readonly object status
     cdef readonly int index
+    cdef int cstat[4]
     cdef object devnames_str
+
+    def __str__(self):
+        return "<cam.CamEnclosureElement type='{0}' status='{1}'>".format(self.type.name, self.status.name)
+
+    def __repr__(self):
+        return str(self)
 
     def __getstate__(self):
         return {
             'index': self.index,
             'type': self.type.name,
             'description': self.description,
-            'status': self.status.name,
-            'devnames': self.devnames
+            'status': self.status.name
         }
+
+    property status:
+        def __get__(self):
+            try:
+                return ElementStatus(self.cstat[0])
+            except ValueError:
+                return ElementStatus.UNKNOWN
+
+
+cdef class CamEnclosureDevice(CamEnclosureElement):
+    def __getstate__(self):
+        base = super(CamEnclosureDevice, self).__getstate__()
+        base['devnames'] = self.devnames
+        return base
+
+    def __str__(self):
+        return "<cam.CamEnclosureDevice devnames='{0}'>".format(self.devnames)
 
     property devnames:
         def __get__(self):
@@ -173,6 +195,48 @@ cdef class CamEnclosureElement(object):
                 return None
 
             return self.devnames_str.split(',')
+
+
+cdef class CamEnclosureFan(CamEnclosureElement):
+    def __getstate__(self):
+        base = super(CamEnclosureFan, self).__getstate__()
+        base['speed'] = self.speed
+        return base
+
+    def __str__(self):
+        return "<cam.CamEnclosureFan speed={0}>".format(self.speed)
+
+    property speed:
+        def __get__(self):
+            return (((self.cstat[1] & 0x7) << 8) + self.cstat[2]) * 10
+
+
+cdef class CamEnclosureThermalSensor(CamEnclosureElement):
+    def __getstate__(self):
+        base = super(CamEnclosureThermalSensor, self).__getstate__()
+        base['temperature'] = self.temperature
+        return base
+
+    def __str__(self):
+        return "<cam.CamEnclosureFan temperature={0}>".format(self.temperature)
+
+    property temperature:
+        def __get__(self):
+            return self.cstat[2] - 20
+
+
+cdef class CamEnclosureVoltageSensor(CamEnclosureElement):
+    def __getstate__(self):
+        base = super(CamEnclosureVoltageSensor, self).__getstate__()
+        base['voltage'] = self.voltage
+        return base
+
+    def __str__(self):
+        return "<cam.CamEnclosureFan voltage={0}>".format(self.voltage)
+
+    property voltage:
+        def __get__(self):
+            pass
 
 
 cdef class CamEnclosure(object):
@@ -268,20 +332,32 @@ cdef class CamEnclosure(object):
                 raise OSError(errno, os.strerror(errno))
 
             for i in range(0, nobj):
-                element = CamEnclosureElement.__new__(CamEnclosureElement)
+                if e_ptr[i].elm_type in (defs.ELMTYP_DEVICE, defs.ELMTYP_ARRAY_DEV):
+                    cls = CamEnclosureDevice
+
+                elif e_ptr[i].elm_type == defs.ELMTYP_FAN:
+                    cls = CamEnclosureFan
+
+                elif e_ptr[i].elm_type == defs.ELMTYP_THERM:
+                    cls = CamEnclosureThermalSensor
+
+                elif e_ptr[i].elm_type == defs.ELMTYP_VOM:
+                    cls = CamEnclosureVoltageSensor
+
+                else:
+                    cls = CamEnclosureElement
+
+                element = cls.__new__(cls)
                 memset(&e_status, 0, sizeof(e_status))
                 e_status.elm_idx = e_ptr[i].elm_idx
                 element.index = e_ptr[i].elm_idx
-                element.type = EnclosureElementType(e_ptr.elm_type)
+                element.type = EnclosureElementType(e_ptr[i].elm_type)
 
                 with nogil:
                     ret = ioctl(self.fd, defs.ENCIOC_GETELMSTAT, &e_status)
 
                 if ret == 0:
-                    try:
-                        element.status = ElementStatus(e_status.cstat[0])
-                    except ValueError:
-                        element.status = ElementStatus.UNKNOWN
+                    element.cstat = e_status.cstat
 
                 memset(buf, 0, sizeof(buf))
                 e_desc.elm_idx = e_ptr[i].elm_idx

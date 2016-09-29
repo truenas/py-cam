@@ -661,7 +661,7 @@ cdef extern from "cam/ctl/ctl_ioctl.h":
         char error_str[CTL_ERROR_STR_LEN]
 
 
-cdef extern from "cam/scsi/scsi_enc.h":
+cdef extern from "cam/scsi/scsi_enc.h" nogil:
     enum:
         ENCIOC_GETNELM
         ENCIOC_GETELMMAP
@@ -706,6 +706,13 @@ cdef extern from "cam/scsi/scsi_enc.h":
         ELMTYP_SAS_EXP
         ELMTYP_SAS_CONN
 
+    enum:
+        ENC_STRING_MAX
+
+    cdef struct encioc_string:
+        size_t bufsiz
+        uint8_t *buf
+
     cdef struct encioc_element:
         unsigned int elm_idx
         unsigned int elm_subenc_id
@@ -725,4 +732,3 @@ cdef extern from "cam/scsi/scsi_enc.h":
         size_t elm_names_size
         size_t elm_names_len
         char *elm_devnames
-

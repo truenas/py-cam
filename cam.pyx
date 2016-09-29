@@ -137,7 +137,9 @@ cdef class CamEnclosureElement(object):
 
     def __getstate__(self):
         return {
-
+            'type': self.type.name,
+            'description': self.description,
+            'devnames': self.devnames
         }
 
     property devnames:
@@ -159,7 +161,8 @@ cdef class CamEnclosure(object):
         return {
             'name': self.name,
             'id': self.id,
-            'status': self.status
+            'status': self.status,
+            'devices': [i.__getstate__() for i in self.devices]
         }
 
     property name:
@@ -238,6 +241,7 @@ cdef class CamEnclosure(object):
 
                 element.type = EnclosureElementType(e_ptr.elm_type)
 
+                memset(buf, 0, sizeof(buf))
                 e_desc.elm_idx = e_ptr[i].elm_idx
                 e_desc.elm_desc_len = sizeof(buf)
                 e_desc.elm_desc_str = buf
@@ -248,6 +252,7 @@ cdef class CamEnclosure(object):
                 if ret == 0:
                     element.description = e_desc.elm_desc_str
 
+                memset(buf, 0, sizeof(buf))
                 e_devnames.elm_idx = e_ptr[i].elm_idx
                 e_devnames.elm_names_size = sizeof(buf)
                 e_devnames.elm_devnames = buf
@@ -258,9 +263,11 @@ cdef class CamEnclosure(object):
                 if ret == 0:
                     element.devnames_str = e_devnames.elm_devnames
 
+                yield element
+
     property devices:
         def __get__(self):
-            pass
+            return (i for i in self.elements if i.type in (EnclosureElementType.DEVICE, EnclosureElementType.ARRAY_DEV))
 
     property sensors:
         def __get__(self):

@@ -73,6 +73,18 @@ class EnclosureStatus(enum.IntEnum):
     OK = 0x80000000
 
 
+class ElementStatus(enum.IntEnum):
+    UNSUPPORTED = defs.SES_OBJSTAT_UNSUPPORTED
+    OK = defs.SES_OBJSTAT_OK
+    CRIT = defs.SES_OBJSTAT_CRIT
+    NONCRIT = defs.SES_OBJSTAT_NONCRIT
+    UNRECOV = defs.SES_OBJSTAT_UNRECOV
+    NOTINSTALLED = defs.SES_OBJSTAT_NOTINSTALLED
+    UNKNOWN = defs.SES_OBJSTAT_UNKNOWN
+    NOTAVAIL = defs.SES_OBJSTAT_NOTAVAIL
+    NOACCESS = defs.SES_OBJSTAT_NOACCESS
+
+
 cdef class CamCCB(object):
     cdef CamDevice device
     cdef defs.ccb *ccb

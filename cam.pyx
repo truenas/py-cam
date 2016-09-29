@@ -154,12 +154,16 @@ cdef class CamDevice(object):
 cdef class CamEnclosureElement(object):
     cdef readonly object type
     cdef readonly object description
+    cdef readonly object status
+    cdef readonly int index
     cdef object devnames_str
 
     def __getstate__(self):
         return {
+            'index': self.index,
             'type': self.type.name,
             'description': self.description,
+            'status': self.status.name,
             'devnames': self.devnames
         }
 
@@ -267,14 +271,17 @@ cdef class CamEnclosure(object):
                 element = CamEnclosureElement.__new__(CamEnclosureElement)
                 memset(&e_status, 0, sizeof(e_status))
                 e_status.elm_idx = e_ptr[i].elm_idx
+                element.index = e_ptr[i].elm_idx
+                element.type = EnclosureElementType(e_ptr.elm_type)
 
                 with nogil:
-                    ret = ioctl(self.fd, defs.ENCIOC_GETELMSTAT, &nobj)
+                    ret = ioctl(self.fd, defs.ENCIOC_GETELMSTAT, &e_status)
 
-                if ret != 0:
-                    pass
-
-                element.type = EnclosureElementType(e_ptr.elm_type)
+                if ret == 0:
+                    try:
+                        element.status = ElementStatus(e_status.cstat[0])
+                    except ValueError:
+                        element.status = ElementStatus.UNKNOWN
 
                 memset(buf, 0, sizeof(buf))
                 e_desc.elm_idx = e_ptr[i].elm_idx

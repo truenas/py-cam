@@ -732,3 +732,11 @@ cdef extern from "cam/scsi/scsi_enc.h" nogil:
         size_t elm_names_size
         size_t elm_names_len
         char *elm_devnames
+
+cdef extern from "cam/scsi/scsi_ses.h":
+    enum:
+        SES_ENCSTAT_UNRECOV
+        SES_ENCSTAT_CRITICAL
+        SES_ENCSTAT_NONCRITICAL
+        SES_ENCSTAT_INFO
+        SES_ENCSTAT_INVOP

@@ -64,6 +64,15 @@ class EnclosureElementType(enum.IntEnum):
     SAS_CONN = defs.ELMTYP_SAS_CONN
 
 
+class EnclosureStatus(enum.IntEnum):
+    UNRECOV = defs.SES_ENCSTAT_UNRECOV
+    CRITICAL = defs.SES_ENCSTAT_CRITICAL
+    NONCRITICAL = defs.SES_ENCSTAT_NONCRITICAL
+    INFO = defs.SES_ENCSTAT_INFO
+    INVOP = defs.SES_ENCSTAT_INVOP
+    OK = 0x80000000
+
+
 cdef class CamCCB(object):
     cdef CamDevice device
     cdef defs.ccb *ccb
@@ -144,6 +153,9 @@ cdef class CamEnclosureElement(object):
 
     property devnames:
         def __get__(self):
+            if not self.devnames_str:
+                return None
+
             return self.devnames_str.split(',')
 
 
@@ -161,7 +173,7 @@ cdef class CamEnclosure(object):
         return {
             'name': self.name,
             'id': self.id,
-            'status': self.status,
+            'status': [i.name for i in self.status],
             'devices': [i.__getstate__() for i in self.devices]
         }
 
@@ -201,7 +213,18 @@ cdef class CamEnclosure(object):
 
     property status:
         def __get__(self):
-            pass
+            cdef unsigned char estat
+
+            with nogil:
+                ret = ioctl(self.fd, defs.ENCIOC_GETENCSTAT, &estat)
+
+            if ret != 0:
+                raise OSError(errno, os.strerror(errno))
+
+            if estat == 0:
+                return {EnclosureStatus.OK}
+
+            return bitmask_to_set(estat, EnclosureStatus)
 
     property elements:
         def __get__(self):
@@ -272,3 +295,15 @@ cdef class CamEnclosure(object):
     property sensors:
         def __get__(self):
             pass
+
+
+def bitmask_to_set(n, enumeration):
+    result = set()
+    while n:
+        b = n & (~n+1)
+        try:
+            result.add(enumeration(b))
+        except ValueError:
+            pass
+
+        n ^= b

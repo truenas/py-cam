@@ -30,7 +30,7 @@ import enum
 import os
 from posix.ioctl cimport ioctl
 from libc.errno cimport errno
-from libc.string cimport memset
+from libc.string cimport memset, memcpy
 from libc.stdlib cimport malloc, free
 from libc.stdint cimport *
 
@@ -155,7 +155,7 @@ cdef class CamEnclosureElement(object):
     cdef readonly object type
     cdef readonly object description
     cdef readonly int index
-    cdef int cstat[4]
+    cdef char cstat[4]
     cdef object devnames_str
 
     def __str__(self):
@@ -236,7 +236,7 @@ cdef class CamEnclosureVoltageSensor(CamEnclosureElement):
 
     property voltage:
         def __get__(self):
-            pass
+            return ((self.cstat[2] << 8) | self.cstat[3]) / 100
 
 
 cdef class CamEnclosure(object):
@@ -357,7 +357,7 @@ cdef class CamEnclosure(object):
                     ret = ioctl(self.fd, defs.ENCIOC_GETELMSTAT, &e_status)
 
                 if ret == 0:
-                    element.cstat = e_status.cstat
+                    memcpy(element.cstat, e_status.cstat, 4)
 
                 memset(buf, 0, sizeof(buf))
                 e_desc.elm_idx = e_ptr[i].elm_idx

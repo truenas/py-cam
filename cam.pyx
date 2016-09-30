@@ -155,7 +155,7 @@ cdef class CamEnclosureElement(object):
     cdef readonly object type
     cdef readonly object description
     cdef readonly int index
-    cdef char cstat[4]
+    cdef unsigned char cstat[4]
     cdef object devnames_str
 
     def __str__(self):

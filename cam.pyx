@@ -385,11 +385,18 @@ cdef class CamEnclosure(object):
 
     property devices:
         def __get__(self):
-            return (i for i in self.elements if i.type in (EnclosureElementType.DEVICE, EnclosureElementType.ARRAY_DEV))
+            return (i for i in self.elements if i.type in (
+                EnclosureElementType.DEVICE,
+                EnclosureElementType.ARRAY_DEV
+            ))
 
     property sensors:
         def __get__(self):
-            pass
+            return (i for i in self.elements if i.type in (
+                EnclosureElementType.THERM,
+                EnclosureElementType.FAN,
+                EnclosureElementType.VOM
+            ))
 
 
 def bitmask_to_set(n, enumeration):

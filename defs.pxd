@@ -75,7 +75,12 @@ cdef extern from "cam/cam_ccb.h":
         uint32_t xflags
 
     cdef struct ccb_scsiio:
-        pass
+        uint32_t dxfer_len
+        uint8_t sense_len
+        uint8_t cdb_len
+        uint8_t scsi_status
+        uint8_t sense_resid
+        uint32_t resid
 
     cdef union ccb:
         ccb_hdr ccb_h

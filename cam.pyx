@@ -201,6 +201,14 @@ cdef class CamCCB(object):
         if ret == -1:
             raise OSError(errno, os.strerror(errno))
 
+    property resid:
+        def __get__(self):
+            return self.ccb.csio.resid
+
+    property scsi_status:
+        def __get__(self):
+            return self.ccb.csio.scsi_status
+
 
 cdef class CamDevice(object):
     cdef defs.cam_device* dev

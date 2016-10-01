@@ -198,7 +198,8 @@ cdef class CamCCB(object):
         with nogil:
             ret = defs.cam_send_ccb(self.device.dev, &self.ccb)
 
-        return ret
+        if ret == -1:
+            raise OSError(errno, os.strerror(errno))
 
 
 cdef class CamDevice(object):

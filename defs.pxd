@@ -184,6 +184,15 @@ cdef extern from "cam/scsi/scsi_all.h" nogil:
         uint8_t extent_length[2]
         uint8_t transport_id_list[0]
 
+    void scsi_ulto2b(uint32_t val, uint8_t *bytes)
+    void scsi_ulto3b(uint32_t val, uint8_t *bytes)
+    void scsi_ulto4b(uint32_t val, uint8_t *bytes)
+    void scsi_u64to8b(uint64_t val, uint8_t *bytes)
+    uint32_t scsi_2btoul(const uint8_t *bytes)
+    uint32_t scsi_3btoul(const uint8_t *bytes)
+    uint32_t scsi_4btoul(const uint8_t *bytes)
+    uint64_t scsi_8btou64(const uint8_t *bytes)
+
     void scsi_test_unit_ready(
         ccb_scsiio *csio,
         uint32_t retries,

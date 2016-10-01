@@ -166,7 +166,28 @@ cdef class CamCCB(object):
             )
 
     def scsi_persistent_reserve_in(self, **kwargs):
-        pass
+        cdef uint32_t c_retries = kwargs.pop('retries', 0)
+        cdef uint32_t c_timeout = kwargs.pop('timeout', 60 * 1000)
+        cdef int c_service_action = kwargs.pop('service_action')
+        cdef uint8_t *c_data
+        cdef uint32_t c_dxfer_len
+
+        result = kwargs.pop('data')
+        c_data = <uint8_t *>result
+        c_dxfer_len = len(result)
+
+        with nogil:
+            defs.scsi_persistent_reserve_in(
+                &self.ccb.csio,
+                c_retries,
+                NULL,
+                defs.MSG_SIMPLE_Q_TAG,
+                c_service_action,
+                c_data,
+                c_dxfer_len,
+                defs.SSD_FULL_SIZE,
+                c_timeout
+            )
 
     def scsi_persistent_reserve_out(self, **kwargs):
         pass
@@ -202,6 +223,9 @@ cdef class CamDevice(object):
             'path_id': self.path_id,
             'serial': self.serial
         }
+
+    def read_keys(self):
+
 
     property bus_id:
         def __get__(self):

@@ -91,6 +91,12 @@ cdef extern from "cam/scsi/scsi_all.h" nogil:
         SSD_EXTRA_MAX
 
     enum:
+        SCSI_RW_READ
+        SCSI_RW_WRITE
+        SCSI_RW_DIRMASK
+        SCSI_RW_BIO
+
+    enum:
         SPRI_RK
         SPRI_RR
         SPRI_RC
@@ -425,12 +431,6 @@ cdef extern from "cam/scsi/scsi_all.h" nogil:
         uint8_t sense_len,
         uint32_t timeout
     )
-
-    enum:
-        SCSI_RW_READ
-        SCSI_RW_WRITE
-        SCSI_RW_DIRMASK
-        SCSI_RW_BIO
 
     void scsi_read_write(
         ccb_scsiio *csio,

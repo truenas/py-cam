@@ -225,7 +225,7 @@ cdef class CamDevice(object):
         }
 
     def read_keys(self):
-
+        pass
 
     property bus_id:
         def __get__(self):

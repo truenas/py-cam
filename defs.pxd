@@ -79,10 +79,16 @@ cdef extern from "cam/cam_ccb.h":
 
     cdef union ccb:
         ccb_hdr ccb_h
+        ccb_scsiio csio
 
 
 cdef extern from "cam/scsi/scsi_all.h" nogil:
     ctypedef void * ccb_callback_t
+
+    enum:
+        SSD_FULL_SIZE
+        SSD_MIN_SIZE
+        SSD_EXTRA_MAX
 
     cdef struct scsi_read_capacity_data:
         uint8_t addr[4]
@@ -91,6 +97,10 @@ cdef extern from "cam/scsi/scsi_all.h" nogil:
     cdef struct scsi_report_luns_data:
         uint8_t length[4]
         uint8_t reserved[4]
+
+    cdef struct scsi_sense_data:
+        uint8_t error_code
+        uint8_t sense_buf[SSD_FULL_SIZE - 1]
 
     void scsi_test_unit_ready(
         ccb_scsiio *csio,
@@ -548,6 +558,67 @@ cdef extern from "cam/scsi/scsi_all.h" nogil:
         int sense_len,
         int timeout
     )
+
+
+cdef extern from "cam/scsi/scsi_message.h":
+    enum:
+        MSG_CMDCOMPLETE
+        MSG_TASK_COMPLETE
+        MSG_EXTENDED
+        MSG_SAVEDATAPOINTER
+        MSG_RESTOREPOINTERS
+        MSG_DISCONNECT
+        MSG_INITIATOR_DET_ERR
+        MSG_ABORT
+        MSG_ABORT_TASK_SET
+        MSG_MESSAGE_REJECT
+        MSG_NOOP
+        MSG_PARITY_ERROR
+        MSG_LINK_CMD_COMPLETE
+        MSG_LINK_CMD_COMPLETEF
+        MSG_BUS_DEV_RESET
+        MSG_TARGET_RESET
+        MSG_ABORT_TAG
+        MSG_ABORT_TASK
+        MSG_CLEAR_QUEUE
+        MSG_CLEAR_TASK_SET
+        MSG_INIT_RECOVERY
+        MSG_REL_RECOVERY
+        MSG_TERM_IO_PROC
+        MSG_CLEAR_ACA
+        MSG_LOGICAL_UNIT_RESET
+        MSG_QAS_REQUEST
+        MSG_SIMPLE_Q_TAG
+        MSG_SIMPLE_TASK
+        MSG_HEAD_OF_Q_TAG
+        MSG_HEAD_OF_QUEUE_TASK
+        MSG_ORDERED_Q_TAG
+        MSG_ORDERED_TASK
+        MSG_IGN_WIDE_RESIDUE
+        MSG_ACA_TASK
+        MSG_IDENTIFYFLAG
+        MSG_IDENTIFY_DISCFLAG
+        MSG_IDENTIFY_LUNMASK
+        MSG_EXT_SDTR
+        MSG_EXT_SDTR_LEN
+        MSG_EXT_WDTR
+        MSG_EXT_WDTR_LEN
+        MSG_EXT_WDTR_BUS_8_BIT
+        MSG_EXT_WDTR_BUS_16_BIT
+        MSG_EXT_WDTR_BUS_32_BIT
+        MSG_EXT_PPR
+        MSG_EXT_PPR_LEN
+        MSG_EXT_PPR_PCOMP_EN
+        MSG_EXT_PPR_RTI
+        MSG_EXT_PPR_RD_STRM
+        MSG_EXT_PPR_WR_FLOW
+        MSG_EXT_PPR_HOLD_MCS
+        MSG_EXT_PPR_QAS_REQ
+        MSG_EXT_PPR_DT_REQ
+        MSG_EXT_PPR_IU_REQ
+        MSG_QUERY_TASK
+        MSG_QUERY_TASK_SET
+        MSG_QUERY_ASYNC_EVENT
 
 
 cdef extern from "cam/ctl/ctl.h":

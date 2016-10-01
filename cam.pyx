@@ -85,18 +85,58 @@ class ElementStatus(enum.IntEnum):
     NOACCESS = defs.SES_OBJSTAT_NOACCESS
 
 
+class SCSIReadOp(enum.IntEnum):
+    READ = defs.SCSI_RW_READ
+    WRITE = defs.SCSI_RW_WRITE
+    DIRMASK = defs.SCSI_RW_DIRMASK
+    BIO = defs.SCSI_RW_BIO
+
+
 cdef class CamCCB(object):
     cdef CamDevice device
-    cdef defs.ccb *ccb
+    cdef defs.ccb ccb
 
     def __init__(self, CamDevice device):
         self.device = device
 
     def scsi_read_write(self, **kwargs):
-        pass
+        cdef uint32_t c_retries = kwargs.pop('retries', 0)
+        cdef int c_read_op = int(kwargs.pop('read_op'))
+        cdef uint64_t c_lba = kwargs.pop('lba')
+        cdef uint32_t c_block_count = kwargs.pop('block_count')
+        cdef uint32_t c_block_len = kwargs.pop('block_len')
+        cdef int c_minimum_cmd_size = kwargs.pop('minimum_cmd_size', 0)
+        cdef uint32_t c_timeout = kwargs.pop('timeout', 60 * 1000)
+        cdef uint32_t c_dxfer_len = c_block_len * c_block_count
+        cdef uint8_t *c_data
+
+        result = kwargs.pop('data')
+        c_data = <uint8_t *>result
+
+        with nogil:
+            defs.scsi_read_write(
+                &self.ccb.csio,
+                c_retries,
+                NULL,
+                defs.MSG_SIMPLE_Q_TAG,
+                c_read_op,
+                0,
+                c_minimum_cmd_size,
+                c_lba,
+                c_block_count,
+                c_data,
+                c_dxfer_len,
+                defs.SSD_FULL_SIZE,
+                c_timeout
+            )
 
     def send(self):
-        pass
+        cdef int ret
+
+        with nogil:
+            ret = defs.cam_send_ccb(self.device.dev, &self.ccb)
+
+        return ret
 
 
 cdef class CamDevice(object):

@@ -93,11 +93,26 @@ class SCSIReadOp(enum.IntEnum):
 
 
 cdef class CamCCB(object):
-    cdef CamDevice device
+    cdef readonly CamDevice device
     cdef defs.ccb ccb
 
     def __init__(self, CamDevice device):
         self.device = device
+
+    def scsi_test_unit_ready(self, **kwargs):
+        pass
+
+    def scsi_request_sense(self, **kwargs):
+        cdef uint32_t c_timeout = kwargs.pop('timeout', 60 * 1000)
+        cdef void *c_data
+
+        result = kwargs.pop('data')
+
+    def scsi_inquiry(self, **kwargs):
+        pass
+
+    def scsi_mode_sense(self, **kwargs):
+        pass
 
     def scsi_read_write(self, **kwargs):
         cdef uint32_t c_retries = kwargs.pop('retries', 0)
@@ -129,6 +144,32 @@ cdef class CamCCB(object):
                 defs.SSD_FULL_SIZE,
                 c_timeout
             )
+
+    def scsi_start_stop(self, **kwargs):
+        cdef uint32_t c_retries = kwargs.pop('retries', 0)
+        cdef uint32_t c_timeout = kwargs.pop('timeout', 60 * 1000)
+        cdef int c_start = kwargs.pop('start')
+        cdef int c_load_eject = kwargs.pop('load_eject')
+        cdef int c_immediate = kwargs.pop('immediate', False)
+
+        with nogil:
+            defs.scsi_start_stop(
+                &self.ccb.csio,
+                c_retries,
+                NULL,
+                defs.MSG_ORDERED_Q_TAG,
+                c_start,
+                c_load_eject,
+                c_immediate,
+                defs.SSD_FULL_SIZE,
+                c_timeout
+            )
+
+    def scsi_persistent_reserve_in(self, **kwargs):
+        pass
+
+    def scsi_persistent_reserve_out(self, **kwargs):
+        pass
 
     def send(self):
         cdef int ret

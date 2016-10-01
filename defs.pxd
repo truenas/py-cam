@@ -90,6 +90,13 @@ cdef extern from "cam/scsi/scsi_all.h" nogil:
         SSD_MIN_SIZE
         SSD_EXTRA_MAX
 
+    enum:
+        SPRI_RK
+        SPRI_RR
+        SPRI_RC
+        SPRI_RS
+        SPRI_MAX_LEN
+
     cdef struct scsi_read_capacity_data:
         uint8_t addr[4]
         uint8_t length[4]

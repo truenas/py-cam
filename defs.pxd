@@ -138,6 +138,41 @@ cdef extern from "cam/scsi/scsi_all.h" nogil:
         uint8_t error_code
         uint8_t sense_buf[SSD_FULL_SIZE - 1]
 
+    cdef struct scsi_per_res_in:
+        uint8_t opcode
+        uint8_t action
+        uint8_t reserved[5]
+        uint8_t length[2]
+        uint8_t control
+
+    cdef struct scsi_per_res_in_header:
+        uint8_t generation[4]
+        uint8_t length[4]
+
+    cdef struct scsi_per_res_key:
+        uint8_t key[8]
+
+    cdef struct scsi_per_res_in_keys:
+        scsi_per_res_in_header header
+        scsi_per_res_key keys[0]
+
+    cdef struct scsi_per_res_out:
+        uint8_t opcode
+        uint8_t action
+        uint8_t scope_type
+        uint8_t reserved[2]
+        uint8_t length[4]
+        uint8_t control
+
+    cdef struct scsi_per_res_out_parms:
+        scsi_per_res_key res_key
+        uint8_t serv_act_res_key[8]
+        uint8_t scope_spec_address[4]
+        uint8_t flags
+        uint8_t reserved1
+        uint8_t extent_length[2]
+        uint8_t transport_id_list[0]
+
     void scsi_test_unit_ready(
         ccb_scsiio *csio,
         uint32_t retries,

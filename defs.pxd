@@ -97,6 +97,35 @@ cdef extern from "cam/scsi/scsi_all.h" nogil:
         SPRI_RS
         SPRI_MAX_LEN
 
+    enum:
+        SPRO_REGISTER
+        SPRO_RESERVE
+        SPRO_RELEASE
+        SPRO_CLEAR
+        SPRO_PREEMPT
+        SPRO_PRE_ABO
+        SPRO_REG_IGNO
+        SPRO_REG_MOVE
+        SPRO_REPL_LOST_RES
+        SPRO_ACTION_MASK
+
+    enum:
+        SPR_SCOPE_MASK
+        SPR_SCOPE_SHIFT
+        SPR_LU_SCOPE
+        SPR_EXTENT_SCOPE
+        SPR_ELEMENT_SCOPE
+        SPR_TYPE_MASK
+        SPR_TYPE_RD_SHARED
+        SPR_TYPE_WR_EX
+        SPR_TYPE_RD_EX
+        SPR_TYPE_EX_AC
+        SPR_TYPE_SHARED
+        SPR_TYPE_WR_EX_RO
+        SPR_TYPE_EX_AC_RO
+        SPR_TYPE_WR_EX_AR
+        SPR_TYPE_EX_AC_AR
+
     cdef struct scsi_read_capacity_data:
         uint8_t addr[4]
         uint8_t length[4]

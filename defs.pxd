@@ -645,6 +645,21 @@ cdef extern from "cam/scsi/scsi_all.h" nogil:
     )
 
 
+cdef extern from "cam/scsi/scsi_da.h" nogil:
+    void scsi_format_unit(
+        ccb_scsiio *csio,
+        u_int32_t retries,
+        ccb_callback_t *cbfcnp,
+        uint8_t tag_action,
+        uint8_t byte2,
+        uint16_t ileave,
+        uint8_t *data_ptr,
+        uint32_t dxfer_len,
+        uint8_t sense_len,
+        uint32_t timeout
+    )
+
+
 cdef extern from "cam/scsi/scsi_message.h":
     enum:
         MSG_CMDCOMPLETE

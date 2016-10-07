@@ -234,7 +234,24 @@ cdef class CamDevice(object):
         }
 
     def read_keys(self):
-        pass
+        cdef defs.scsi_per_res_in_keys *pdu
+        cdef uint32_t *generation
+        buffer = bytearray(defs.SPRI_MAX_LEN)
+
+        ccb = CamCCB(self)
+        ccb.scsi_persistent_reserve_in(service_action=defs.SPRI_RK, data=buffer)
+        ccb.send()
+
+        print('resid = {0}'.format(ccb.resid))
+        print('data = {0}'.format(buffer))
+
+        pdu = <defs.scsi_per_res_in_keys *><void *>buffer
+        generation = <uint32_t *>&pdu.header.generation[0]
+
+        return {
+            'generation': generation[0],
+        }
+
 
     property bus_id:
         def __get__(self):
@@ -263,6 +280,7 @@ cdef class CamDevice(object):
     property serial:
         def __get__(self):
             return self.dev.serial_num[:self.dev.serial_num_len]
+
 
 
 cdef class CamEnclosureElement(object):
@@ -523,3 +541,5 @@ def bitmask_to_set(n, enumeration):
             pass
 
         n ^= b
+
+    return result

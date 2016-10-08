@@ -648,7 +648,7 @@ cdef extern from "cam/scsi/scsi_all.h" nogil:
 cdef extern from "cam/scsi/scsi_da.h" nogil:
     void scsi_format_unit(
         ccb_scsiio *csio,
-        u_int32_t retries,
+        uint32_t retries,
         ccb_callback_t *cbfcnp,
         uint8_t tag_action,
         uint8_t byte2,

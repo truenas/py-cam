@@ -192,6 +192,8 @@ cdef class CamCCB(object):
     def scsi_persistent_reserve_out(self, **kwargs):
         pass
 
+    #def scsi_format_unit(self, )
+
     def send(self):
         cdef int ret
 
@@ -214,7 +216,11 @@ cdef class CamDevice(object):
     cdef defs.cam_device* dev
 
     def __init__(self, path):
-        self.dev = defs.cam_open_device(path, defs.O_RDWR)
+        cdef const char *c_path = path
+
+        with nogil:
+            self.dev = defs.cam_open_device(c_path, defs.O_RDWR)
+
         if self.dev == NULL:
             raise RuntimeError('Cannot open device')
 

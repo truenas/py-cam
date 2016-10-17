@@ -165,6 +165,24 @@ cdef class CamCCB(object):
                 c_timeout
             )
 
+    def scsi_synchronize_cache(self, **kwargs):
+        cdef uint32_t c_retries = kwargs.pop('retries', 0)
+        cdef uint32_t c_timeout = kwargs.pop('timeout', 60 * 1000)
+        cdef uint64_t c_lba = kwargs.pop('lba')
+        cdef uint32_t c_block_count = kwargs.pop('block_count')
+
+        with nogil:
+            defs.scsi_synchronize_cache(
+                &self.ccb.csio,
+                c_retries,
+                NULL,
+                defs.MSG_SIMPLE_Q_TAG,
+                c_lba,
+                c_block_count,
+                defs.SSD_FULL_SIZE,
+                c_timeout
+            )
+
     def scsi_persistent_reserve_in(self, **kwargs):
         cdef uint32_t c_retries = kwargs.pop('retries', 0)
         cdef uint32_t c_timeout = kwargs.pop('timeout', 60 * 1000)

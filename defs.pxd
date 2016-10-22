@@ -922,3 +922,69 @@ cdef extern from "cam/scsi/scsi_ses.h":
         SES_OBJSTAT_UNKNOWN
         SES_OBJSTAT_NOTAVAIL
         SES_OBJSTAT_NOACCESS
+
+
+cdef extern from "dev/iscsi/iscsi_ioctl.h":
+    enum:
+        ISCSI_PATH
+        ISCSI_NAME_LEN
+        ISCSI_ADDR_LEN
+        ISCSI_ALIAS_LEN
+        ISCSI_SECRET_LEN
+        ISCSI_OFFLOAD_LEN
+        ISCSI_REASON_LEN
+
+    enum:
+        ISCSISADD
+        ISCSISREMOVE
+        ISCSISLIST
+        ISCSISMODIFY
+
+    cdef struct iscsi_session_conf:
+        char isc_initiator[ISCSI_NAME_LEN]
+        char isc_initiator_addr[ISCSI_ADDR_LEN]
+        char isc_initiator_alias[ISCSI_ALIAS_LEN]
+        char isc_target[ISCSI_NAME_LEN]
+        char isc_target_addr[ISCSI_ADDR_LEN]
+        char isc_user[ISCSI_NAME_LEN]
+        char isc_secret[ISCSI_SECRET_LEN]
+        char isc_mutual_user[ISCSI_NAME_LEN]
+        char isc_mutual_secret[ISCSI_SECRET_LEN]
+        int isc_discovery;
+        int isc_header_digest;
+        int isc_data_digest;
+        int isc_iser;
+        char isc_offload[ISCSI_OFFLOAD_LEN]
+        int isc_spare[2]
+
+    cdef struct iscsi_session_state:
+        iscsi_session_conf iss_conf
+        unsigned int iss_id
+        char iss_target_alias[ISCSI_ALIAS_LEN]
+        int iss_header_digest
+        int iss_data_digest
+        int iss_max_data_segment_length
+        int iss_immediate_data
+        int iss_connected
+        char iss_reason[ISCSI_REASON_LEN]
+        char iss_offload[ISCSI_OFFLOAD_LEN]
+        int iss_spare[2]
+
+    cdef struct iscsi_session_add:
+        iscsi_session_conf isa_conf
+        int isa_spare[4]
+
+    cdef struct iscsi_session_remove:
+        unsigned int isr_session_id
+        iscsi_session_conf isr_conf
+        int isr_spare[4]
+
+    cdef struct iscsi_session_list:
+        unsigned int isl_nentries
+        iscsi_session_state *isl_pstates
+        int isl_spare[4]
+
+    cdef struct iscsi_session_modify:
+        unsigned int ism_session_id
+        iscsi_session_conf ism_conf
+        int ism_spare[4]

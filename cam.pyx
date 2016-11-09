@@ -308,6 +308,7 @@ cdef class CamDevice(object):
 
 
 cdef class CamEnclosureElement(object):
+    cdef readonly CamEnclosure parent
     cdef readonly object type
     cdef readonly object description
     cdef readonly int index
@@ -344,6 +345,29 @@ cdef class CamEnclosureDevice(CamEnclosureElement):
 
     def __str__(self):
         return "<cam.CamEnclosureDevice devnames='{0}'>".format(self.devnames)
+
+    def identify(self, onoff, setfault):
+        cdef defs.encioc_elm_status e_status
+        cdef int ret
+
+        e_status.elm_idx = self.index
+        with nogil:
+            ret = ioctl(self.parent.fd, defs.ENCIOC_GETELMSTAT, &e_status)
+
+        if ret != 0:
+            raise OSError(errno, os.strerror(errno))
+
+        e_status.cstat[0] |= 0x80
+        if onoff:
+            e_status.cstat[2] |= 0x20 if setfault else 0x02
+        else:
+            e_status.cstat[2] &= 0xdf if setfault else 0xfd
+
+        with nogil:
+            ret = ioctl(self.parent.fd, defs.ENCIOC_SETELMSTAT, &e_status)
+
+        if ret != 0:
+            raise OSError(errno, os.strerror(errno))
 
     property devnames:
         def __get__(self):
@@ -506,6 +530,7 @@ cdef class CamEnclosure(object):
                 element = cls.__new__(cls)
                 memset(&e_status, 0, sizeof(e_status))
                 e_status.elm_idx = e_ptr[i].elm_idx
+                element.parent = self
                 element.index = e_ptr[i].elm_idx
                 element.type = EnclosureElementType(e_ptr[i].elm_type)
 

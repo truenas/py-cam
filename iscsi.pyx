@@ -163,7 +163,22 @@ cdef class ISCSIInitiator(object):
             raise OSError(errno, os.strerror(errno))
 
     def remove_session(self, session_or_id):
-        pass
+        cdef defs.iscsi_session_remove isr
+        cdef int err
+
+        if isinstance(session_or_id, ISCSISessionState):
+            id = session_or_id.id
+        else:
+            id = session_or_id
+
+        memset(&isr, 0, sizeof(isr))
+        isr.isr_session_id = id
+
+        with nogil:
+            err = ioctl(self.fd, defs.ISCSISREMOVE, <void *>&isr)
+
+        if err != 0:
+            raise OSError(errno, os.strerror(errno))
 
     property sessions:
         def __get__(self):

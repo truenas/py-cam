@@ -950,9 +950,9 @@ cdef extern from "dev/iscsi/iscsi_ioctl.h":
         char isc_secret[ISCSI_SECRET_LEN]
         char isc_mutual_user[ISCSI_NAME_LEN]
         char isc_mutual_secret[ISCSI_SECRET_LEN]
-        int isc_discovery;
-        int isc_header_digest;
-        int isc_data_digest;
+        int isc_discovery
+        int isc_header_digest
+        int isc_data_digest
         int isc_iser;
         char isc_offload[ISCSI_OFFLOAD_LEN]
         int isc_spare[2]

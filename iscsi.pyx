@@ -197,5 +197,5 @@ cdef class ISCSIInitiator(object):
                     ses = ISCSISessionState.__new__(ISCSISessionState)
                     memcpy(&ses.state, &states[i], sizeof(defs.iscsi_session_state))
                     yield ses
-            except:
+            finally:
                 free(states)

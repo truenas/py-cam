@@ -50,6 +50,11 @@ extensions = [
         "ctl",
         ["ctl.pyx"],
         include_dirs=system_includes
+    ),
+    Extension(
+        "iscsi",
+        ["iscsi.pyx"],
+        include_dirs=system_includes
     )
 ]
 

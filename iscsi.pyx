@@ -87,35 +87,43 @@ cdef class ISCSISessionConfig(object):
             return self.conf.isc_user
 
         def __set__(self, value):
-            strlcpy(self.conf.isc_user, value, defs.ISCSI_NAME_LEN)
+            strlcpy(self.conf.isc_user, value or '', defs.ISCSI_NAME_LEN)
 
     property secret:
         def __get__(self):
             return self.conf.isc_secret
 
         def __set__(self, value):
-            strlcpy(self.conf.isc_secret, value, defs.ISCSI_SECRET_LEN)
+            strlcpy(self.conf.isc_secret, value or '', defs.ISCSI_SECRET_LEN)
 
     property mutual_user:
         def __get__(self):
             return self.conf.isc_mutual_user
 
         def __set__(self, value):
-            strlcpy(self.conf.isc_mutual_user, value, defs.ISCSI_NAME_LEN)
+            strlcpy(self.conf.isc_mutual_user, value or '', defs.ISCSI_NAME_LEN)
 
     property mutual_secret:
         def __get__(self):
             return self.conf.isc_mutual_secret
 
         def __set__(self, value):
-            strlcpy(self.conf.isc_mutual_secret, value, defs.ISCSI_SECRET_LEN)
+            strlcpy(self.conf.isc_mutual_secret, value or '', defs.ISCSI_SECRET_LEN)
 
     property discovery:
         def __get__(self):
             return self.conf.isc_discovery
 
         def __set__(self, value):
-            self.conf.isc_discovery = value
+            self.conf.isc_discovery = bool(value)
+
+    property enable:
+        def __get__(self):
+            return self.conf.isc_enable
+
+        def __set__(self, value):
+            self.conf.isc_enable = bool(value)
+
 
 
 cdef class ISCSISessionState(object):
@@ -129,6 +137,10 @@ cdef class ISCSISessionState(object):
     property alias:
         def __get__(self):
             return self.state.iss_target_alias
+
+    property reason:
+        def __get__(self):
+            return self.state.iss_reason
 
     property connected:
         def __get__(self):

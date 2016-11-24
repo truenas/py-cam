@@ -192,7 +192,7 @@ cdef class ISCSIInitiator(object):
         if err != 0:
             raise OSError(errno, os.strerror(errno))
 
-    def modify_session(self, session):
+    def modify_session(self, ISCSISessionConfig session):
         cdef defs.iscsi_session_modify ism
         cdef int err
 

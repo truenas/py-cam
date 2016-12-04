@@ -532,7 +532,12 @@ cdef class CamEnclosure(object):
                 e_status.elm_idx = e_ptr[i].elm_idx
                 element.parent = self
                 element.index = e_ptr[i].elm_idx
-                element.type = EnclosureElementType(e_ptr[i].elm_type)
+                element.type = EnclosureElementType.UNSPECIFIED
+
+                try:
+                    element.type = EnclosureElementType(e_ptr[i].elm_type)
+                except ValueError:
+                    pass
 
                 with nogil:
                     ret = ioctl(self.fd, defs.ENCIOC_GETELMSTAT, &e_status)

@@ -28,9 +28,13 @@
 cimport defs
 import os
 from posix.ioctl cimport ioctl
-from libc.errno cimport errno, EMSGSIZE
 from libc.string cimport memset, memcpy
 from libc.stdlib cimport realloc, free
+
+
+cdef extern from "errno.h":
+    enum:
+        EMSGSIZE
 
 
 cdef extern from "string.h":

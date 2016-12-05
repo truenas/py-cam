@@ -27,6 +27,7 @@
 
 cimport defs
 import os
+from libc.errno cimport errno
 from posix.ioctl cimport ioctl
 from libc.string cimport memset, memcpy
 from libc.stdlib cimport realloc, free

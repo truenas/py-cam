@@ -228,7 +228,7 @@ cdef class ISCSIInitiator(object):
                 with nogil:
                     err = ioctl(self.fd, defs.ISCSISLIST, <void *>&isl)
 
-                if err != 0 and errno == errno.EMSGSIZE:
+                if err != 0 and errno == EMSGSIZE:
                     nentries *= 2
                     continue
 

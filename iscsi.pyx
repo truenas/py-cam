@@ -166,6 +166,12 @@ cdef class ISCSIInitiator(object):
     def __init__(self):
         self.fd = os.open("/dev/iscsi", os.O_RDWR)
 
+    def __dealloc__(self):
+        try:
+            os.close(self.fd)
+        except:
+            pass
+
     def add_session(self, ISCSISessionConfig session):
         cdef defs.iscsi_session_add isa
         cdef int ret

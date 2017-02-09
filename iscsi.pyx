@@ -214,7 +214,7 @@ cdef class ISCSIInitiator(object):
 
         memset(&ism, 0, sizeof(ism))
         ism.ism_session_id = id
-        memcpy(&ism.ism_conf, &config, sizeof(defs.iscsi_session_conf))
+        memcpy(&ism.ism_conf, &config.conf, sizeof(defs.iscsi_session_conf))
 
         with nogil:
             err = ioctl(self.fd, defs.ISCSISREMOVE, <void *>&ism)

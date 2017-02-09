@@ -217,7 +217,7 @@ cdef class ISCSIInitiator(object):
         memcpy(&ism.ism_conf, &config.conf, sizeof(defs.iscsi_session_conf))
 
         with nogil:
-            err = ioctl(self.fd, defs.ISCSISREMOVE, <void *>&ism)
+            err = ioctl(self.fd, defs.ISCSISMODIFY, <void *>&ism)
 
         if err != 0:
             raise OSError(errno, os.strerror(errno))

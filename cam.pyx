@@ -554,7 +554,7 @@ cdef class CamEnclosure(object):
                     ret = ioctl(self.fd, defs.ENCIOC_GETELMDESC, &e_desc)
 
                 if ret == 0:
-                    element.description = e_desc.elm_desc_str
+                    element.description = (<bytes>e_desc.elm_desc_str).decode('ascii', 'ignore')
 
                 memset(buf, 0, sizeof(buf))
                 e_devnames.elm_idx = e_ptr[i].elm_idx

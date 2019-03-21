@@ -27,6 +27,7 @@
 
 cimport defs
 import enum
+import errno as pyerrno
 import os
 from posix.ioctl cimport ioctl
 from libc.errno cimport errno
@@ -85,6 +86,12 @@ class ElementStatus(enum.IntEnum):
     NOACCESS = defs.SES_OBJSTAT_NOACCESS
 
 
+cdef get_unaligned_be16(void *p):
+    cdef uint16_t u;
+    memcpy(&u, p, 2)
+    return defs.bswap16(u)
+
+
 class SCSIReadOp(enum.IntEnum):
     READ = defs.SCSI_RW_READ
     WRITE = defs.SCSI_RW_WRITE
@@ -113,6 +120,35 @@ cdef class CamCCB(object):
 
     def scsi_mode_sense(self, **kwargs):
         pass
+
+    def scsi_log_sense(self, retries=0, page=0, save_pages=False, ppc=0):
+        cdef uint32_t c_retries = retries
+        cdef uint8_t c_page = page
+        cdef int c_save_pages = save_pages
+        cdef int c_ppc = ppc
+
+        cdef uint32_t c_param_ptr
+        cdef uint8_t c_param_buf[1024]
+        cdef uint32_t c_param_len = 1024
+
+        c_param_ptr = <uint32_t>&c_param_buf
+
+        with nogil:
+            defs.scsi_log_sense(
+                &self.ccb.csio,
+                c_retries,
+                NULL,
+                defs.MSG_SIMPLE_Q_TAG,
+                c_page,
+                0,
+                c_save_pages,
+                c_ppc,
+                0,
+                c_param_buf,
+                4,
+                defs.SSD_FULL_SIZE,
+                60 * 1000,
+            )
 
     def scsi_read_write(self, **kwargs):
         cdef uint32_t c_retries = kwargs.pop('retries', 0)
@@ -214,12 +250,23 @@ cdef class CamCCB(object):
 
     def send(self):
         cdef int ret
+        cdef char errmsg[1024]
+
+        self.ccb.ccb_h.flags |= defs.CAM_PASS_ERR_RECOVER
 
         with nogil:
             ret = defs.cam_send_ccb(self.device.dev, &self.ccb)
 
         if ret == -1:
             raise OSError(errno, os.strerror(errno))
+
+        status = self.ccb.ccb_h.status & defs.CAM_STATUS_MASK
+        if status not in (defs.CAM_REQ_CMP, defs.CAM_SCSI_STATUS_ERROR):
+            raise OSError(pyerrno.EOPNOTSUPP, 'Transport error, is it SCSI?')
+
+        if self.scsi_status != 0:
+            <int>defs.cam_error_string(self.device.dev, &self.ccb, <char *>&errmsg, 1024, defs.CAM_ESF_ALL, defs.CAM_EPF_ALL)
+            raise OSError(pyerrno.EBADMSG, errmsg.strip())
 
     property resid:
         def __get__(self):

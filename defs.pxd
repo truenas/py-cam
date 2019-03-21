@@ -27,6 +27,10 @@
 from libc.stdint cimport *
 
 
+cdef extern from "sys/endian.h":
+     uint16_t bswap16(uint16_t int16)
+
+
 cdef extern from "fcntl.h":
     enum:
         O_RDWR
@@ -73,6 +77,9 @@ cdef extern from "cam/cam_ccb.h":
         uint32_t status
         uint32_t flags
         uint32_t xflags
+
+    ctypedef enum ccb_flags:
+        CAM_PASS_ERR_RECOVER = 0x00010000
 
     cdef struct ccb_scsiio:
         uint32_t dxfer_len
@@ -987,3 +994,75 @@ cdef extern from "dev/iscsi/iscsi_ioctl.h":
         unsigned int ism_session_id
         iscsi_session_conf ism_conf
         int ism_spare[4]
+
+
+cdef extern from "cam/cam.h":
+    enum:
+        CAM_REQ_INPROG
+        CAM_REQ_CMP
+        CAM_REQ_ABORTED
+        CAM_UA_ABORT
+        CAM_REQ_CMP_ERR
+        CAM_BUSY
+        CAM_REQ_INVALID
+        CAM_PATH_INVALID
+        CAM_DEV_NOT_THERE
+        CAM_UA_TERMIO
+        CAM_SEL_TIMEOUT
+        CAM_CMD_TIMEOUT
+        CAM_SCSI_STATUS_ERROR
+        CAM_MSG_REJECT_REC
+        CAM_SCSI_BUS_RESET
+        CAM_UNCOR_PARITY
+        CAM_AUTOSENSE_FAIL
+        CAM_NO_HBA
+        CAM_DATA_RUN_ERR
+        CAM_UNEXP_BUSFREE
+        CAM_SEQUENCE_FAIL
+        CAM_CCB_LEN_ERR
+        CAM_PROVIDE_FAIL
+        CAM_BDR_SENT
+        CAM_REQ_TERMIO
+        CAM_UNREC_HBA_ERROR
+        CAM_REQ_TOO_BIG
+        CAM_REQUEUE_REQ
+        CAM_ATA_STATUS_ERROR
+        CAM_SCSI_IT_NEXUS_LOST
+        CAM_SMP_STATUS_ERROR
+        CAM_REQ_SOFTTIMEOUT
+        CAM_IDE
+        CAM_RESRC_UNAVAIL
+        CAM_UNACKED_EVENT
+        CAM_MESSAGE_RECV
+        CAM_INVALID_CDB
+        CAM_LUN_INVALID
+        CAM_TID_INVALID
+        CAM_FUNC_NOTAVAIL
+        CAM_NO_NEXUS
+        CAM_IID_INVALID
+        CAM_CDB_RECVD
+        CAM_LUN_ALRDY_ENA
+        CAM_SCSI_BUSY
+        CAM_DEV_QFRZN
+        CAM_AUTOSNS_VALID
+        CAM_RELEASE_SIMQ
+        CAM_SIM_QUEUED
+        CAM_QOS_VALID
+        CAM_STATUS_MASK
+        CAM_SENT_SENSE
+
+    ctypedef enum cam_error_string_flags:
+        CAM_ESF_NONE
+        CAM_ESF_COMMAND
+        CAM_ESF_CAM_STATUS
+        CAM_ESF_PROTO_STATUS
+        CAM_ESF_ALL
+
+    ctypedef enum cam_error_proto_flags:
+        CAM_EPF_NONE
+        CAM_EPF_MINIMAL
+        CAM_EPF_NORMAL
+        CAM_EPF_ALL
+        CAM_EPF_LEVEL_MASK
+
+    extern char * cam_error_string(cam_device *, ccb *, char *, int, cam_error_string_flags, cam_error_proto_flags)

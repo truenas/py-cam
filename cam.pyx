@@ -29,6 +29,7 @@ cimport defs
 import enum
 import errno as pyerrno
 import os
+import struct
 from posix.ioctl cimport ioctl
 from libc.errno cimport errno
 from libc.string cimport memset, memcpy
@@ -90,6 +91,10 @@ cdef get_unaligned_be16(void *p):
     cdef uint16_t u;
     memcpy(&u, p, 2)
     return defs.bswap16(u)
+
+
+class SCSILogSense(enum.IntEnum):
+    TEMPERATURE = 0xd
 
 
 class SCSIReadOp(enum.IntEnum):
@@ -160,34 +165,38 @@ cdef class CamCCB(object):
     def scsi_mode_sense(self, **kwargs):
         pass
 
-    def scsi_log_sense(self, retries=0, page=0, save_pages=False, ppc=0):
+    def scsi_log_sense(self, retries=0, page=0, page_code=0, paramptr=0, save_pages=False, ppc=0, data=None):
         cdef uint32_t c_retries = retries
         cdef uint8_t c_page = page
+        cdef uint8_t c_page_code = page_code
         cdef int c_save_pages = save_pages
         cdef int c_ppc = ppc
 
-        cdef uint32_t c_param_ptr
-        cdef uint8_t c_param_buf[1024]
-        cdef uint32_t c_param_len = 1024
-
-        c_param_ptr = <uint32_t>&c_param_buf
+        cdef uint32_t c_param_ptr = paramptr
+        cdef uint8_t *c_param_buf
+        cdef uint32_t c_param_len = len(data)
 
         with nogil:
+            c_param_buf = <uint8_t *>malloc(c_param_len)
+            memset(c_param_buf, 0, c_param_len)
             defs.scsi_log_sense(
                 &self.ccb.csio,
                 c_retries,
                 NULL,
                 defs.MSG_SIMPLE_Q_TAG,
+                c_page_code,
                 c_page,
-                0,
                 c_save_pages,
                 c_ppc,
                 0,
                 c_param_buf,
-                4,
+                c_param_len,
                 defs.SSD_FULL_SIZE,
                 60 * 1000,
             )
+
+        self.send()
+        memcpy(<uint8_t *>data, c_param_buf, c_param_len)
 
     def scsi_read_write(self, **kwargs):
         cdef uint32_t c_retries = kwargs.pop('retries', 0)
@@ -339,6 +348,27 @@ cdef class CamDevice(object):
             'path_id': self.path_id,
             'serial': self.serial
         }
+
+    def get_temperature(self):
+        # FIXME: if scsi
+        if True:
+            ccb = CamCCB(self)
+            data = bytearray(32)
+            ccb.scsi_log_sense(page_code=SCSILogSense.TEMPERATURE.value, data=data)
+            length = struct.unpack('>H', data[2:4])[0]
+            if length == 0:
+                return
+            data = data[4:]
+            cur = 0
+            while cur < length:
+                code = struct.unpack('>h', data[cur:cur + 2])[0]
+                cur += 2
+                if code in (0, 1):
+                    if code == 0:
+                        return data[cur + 3]
+                else:
+                    break
+                cur += 4
 
     def read_keys(self):
         cdef defs.scsi_per_res_in_keys *pdu

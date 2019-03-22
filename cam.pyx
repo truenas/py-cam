@@ -353,12 +353,16 @@ cdef class CamDevice(object):
         # FIXME: if scsi
         if True:
             ccb = CamCCB(self)
-            data = bytearray(32)
+            hdr_size = 4
+            data = bytearray(hdr_size)
             ccb.scsi_log_sense(page_code=SCSILogSense.TEMPERATURE.value, data=data)
             length = struct.unpack('>H', data[2:4])[0]
             if length == 0:
                 return
-            data = data[4:]
+
+            data = bytearray(hdr_size + length)
+            ccb.scsi_log_sense(page_code=SCSILogSense.TEMPERATURE.value, data=data)
+            data = data[hdr_size:]
             cur = 0
             while cur < length:
                 code = struct.unpack('>h', data[cur:cur + 2])[0]

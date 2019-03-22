@@ -72,13 +72,36 @@ cdef extern from "camlib.h" nogil:
     cdef int cam_send_ccb(cam_device* dev, ccb* ccb)
 
 
-cdef extern from "cam/cam_ccb.h":
+cdef extern from "cam/ata/ata_all.h" nogil:
+
+    cdef struct ata_res:
+        uint8_t flags
+        uint8_t status
+        uint8_t error
+
+    extern void ata_28bit_cmd(ccb_ataio *, uint8_t, uint8_t, uint32_t, uint8_t)
+    extern void ata_48bit_cmd(ccb_ataio *, uint8_t, uint16_t, uint64_t, uint16_t)
+
+
+cdef extern from "cam/cam_ccb.h" nogil:
+
+    ctypedef enum xpt_opcode:
+        XPT_FC_QUEUED = 0x100
+        XPT_FC_DEV_QUEUED = 0x800 | XPT_FC_QUEUED
+        XPT_ATA_IO = 0x18
+
     cdef struct ccb_hdr:
+        uint32_t retry_count
+        void (*cbfcnp)(void *, void*)
         uint32_t status
         uint32_t flags
         uint32_t xflags
+        xpt_opcode func_code
+        uint32_t timeout
 
     ctypedef enum ccb_flags:
+        CAM_DIR_IN = 0x00000040
+        CAM_DIR_OUT = 0x00000080
         CAM_PASS_ERR_RECOVER = 0x00010000
 
     cdef struct ccb_scsiio:
@@ -89,9 +112,18 @@ cdef extern from "cam/cam_ccb.h":
         uint8_t sense_resid
         uint32_t resid
 
+    cdef struct ccb_ataio:
+        ccb_hdr ccb_h
+        ata_res res
+        uint8_t *data_ptr
+        uint32_t dxfer_len
+        uint32_t resid
+        uint8_t ata_flags
+
     cdef union ccb:
         ccb_hdr ccb_h
         ccb_scsiio csio
+        ccb_ataio ataio
 
 
 cdef extern from "cam/scsi/scsi_all.h" nogil:

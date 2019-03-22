@@ -99,12 +99,51 @@ class SCSIReadOp(enum.IntEnum):
     BIO = defs.SCSI_RW_BIO
 
 
+class CCBFlags(enum.IntEnum):
+    DIR_IN = defs.CAM_DIR_IN
+
+
 cdef class CamCCB(object):
     cdef readonly CamDevice device
     cdef defs.ccb ccb
 
     def __init__(self, CamDevice device):
         self.device = device
+
+    def ata_cmd(self, flags, cmd, features, data, lba, sector_count):
+        cdef int c_retries = 0
+        cdef uint32_t c_flags = flags
+        cdef uint8_t c_tag_action = 0
+        cdef uint8_t c_cmd = cmd
+        cdef uint16_t c_features = features
+        cdef uint64_t c_lba = lba
+        cdef uint16_t c_sector_count = sector_count
+        cdef uint8_t *c_data_ptr
+        cdef uint16_t c_dxfer_len = len(data)
+        cdef uint32_t c_timeout = 5 * 1000
+
+        with nogil:
+            c_data_ptr = <uint8_t *>malloc(c_dxfer_len)
+            memset(<void *>c_data_ptr, 0, c_dxfer_len)
+            self.ccb.ataio.ccb_h.func_code = defs.XPT_ATA_IO
+            self.ccb.ataio.ccb_h.flags = c_flags
+            self.ccb.ataio.ccb_h.retry_count = c_retries
+            self.ccb.ataio.ccb_h.cbfcnp = NULL
+            self.ccb.ataio.ccb_h.timeout = c_timeout
+            self.ccb.ataio.data_ptr = c_data_ptr
+            self.ccb.ataio.dxfer_len = c_dxfer_len
+            self.ccb.ataio.ata_flags = 0
+
+            defs.ata_28bit_cmd(
+                &self.ccb.ataio,
+                c_cmd,
+                c_features,
+                c_lba,
+                c_sector_count,
+            )
+        self.send()
+        memcpy(<uint8_t *>data, c_data_ptr, c_dxfer_len)
+        free(c_data_ptr)
 
     def scsi_test_unit_ready(self, **kwargs):
         pass
@@ -261,10 +300,7 @@ cdef class CamCCB(object):
             raise OSError(errno, os.strerror(errno))
 
         status = self.ccb.ccb_h.status & defs.CAM_STATUS_MASK
-        if status not in (defs.CAM_REQ_CMP, defs.CAM_SCSI_STATUS_ERROR):
-            raise OSError(pyerrno.EOPNOTSUPP, 'Transport error, is it SCSI?')
-
-        if self.scsi_status != 0:
+        if status != defs.CAM_REQ_CMP:
             <int>defs.cam_error_string(self.device.dev, &self.ccb, <char *>&errmsg, 1024, defs.CAM_ESF_ALL, defs.CAM_EPF_ALL)
             raise OSError(pyerrno.EBADMSG, errmsg.strip())
 

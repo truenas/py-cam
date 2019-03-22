@@ -95,6 +95,7 @@ cdef get_unaligned_be16(void *p):
 
 class SCSILogSense(enum.IntEnum):
     TEMPERATURE = 0xd
+    IE = 0x2f
 
 
 class SCSIReadOp(enum.IntEnum):
@@ -354,25 +355,39 @@ cdef class CamDevice(object):
         if True:
             ccb = CamCCB(self)
             hdr_size = 4
+            try:
+                data = bytearray(hdr_size)
+                ccb.scsi_log_sense(page_code=SCSILogSense.TEMPERATURE.value, data=data)
+                length = struct.unpack('>H', data[2:4])[0]
+                if length == 0:
+                    return
+
+                data = bytearray(hdr_size + length)
+                ccb.scsi_log_sense(page_code=SCSILogSense.TEMPERATURE.value, data=data)
+                data = data[hdr_size:]
+                cur = 0
+                while cur < length:
+                    code = struct.unpack('>h', data[cur:cur + 2])[0]
+                    cur += 2
+                    if code in (0, 1):
+                        if code == 0:
+                            return data[cur + 3]
+                    else:
+                        break
+                    cur += 4
+            except OSError:
+                pass
+
             data = bytearray(hdr_size)
-            ccb.scsi_log_sense(page_code=SCSILogSense.TEMPERATURE.value, data=data)
+            ccb.scsi_log_sense(page_code=SCSILogSense.IE.value, data=data)
             length = struct.unpack('>H', data[2:4])[0]
             if length == 0:
                 return
 
             data = bytearray(hdr_size + length)
-            ccb.scsi_log_sense(page_code=SCSILogSense.TEMPERATURE.value, data=data)
+            ccb.scsi_log_sense(page_code=SCSILogSense.IE.value, data=data)
             data = data[hdr_size:]
-            cur = 0
-            while cur < length:
-                code = struct.unpack('>h', data[cur:cur + 2])[0]
-                cur += 2
-                if code in (0, 1):
-                    if code == 0:
-                        return data[cur + 3]
-                else:
-                    break
-                cur += 4
+            return data[6]  # Most recent temperature reading
 
     def read_keys(self):
         cdef defs.scsi_per_res_in_keys *pdu

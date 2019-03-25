@@ -32,6 +32,10 @@ from distutils.extension import Extension
 from Cython.Build import cythonize
 
 
+if 'FREEBSD_SRC' not in os.environ:
+    os.environ['FREEBSD_SRC'] = '/usr/src'
+
+
 system_includes = [
     "${FREEBSD_SRC}/sys",
 ]

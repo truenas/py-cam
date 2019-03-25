@@ -387,7 +387,10 @@ cdef class CamDevice(object):
             data = bytearray(hdr_size + length)
             ccb.scsi_log_sense(page_code=SCSILogSense.IE.value, data=data)
             data = data[hdr_size:]
-            return data[6]  # Most recent temperature reading
+            temp = data[6]  # Most recent temperature reading
+            # Per spec 0xff is set when unable to read temperature
+            if temp != 0xff:
+                return temp
 
     def read_keys(self):
         cdef defs.scsi_per_res_in_keys *pdu

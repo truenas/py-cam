@@ -29,6 +29,7 @@ from libc.stdint cimport *
 
 cdef extern from "sys/endian.h":
      uint16_t bswap16(uint16_t int16)
+     uint32_t bswap32(uint32_t int32)
 
 
 cdef extern from "fcntl.h":

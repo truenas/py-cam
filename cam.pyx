@@ -93,6 +93,12 @@ cdef get_unaligned_be16(void *p):
     return defs.bswap16(u)
 
 
+cdef get_unaligned_be32(void *p):
+    cdef uint32_t u;
+    memcpy(&u, p, 4)
+    return defs.bswap32(u)
+
+
 class SCSILogSense(enum.IntEnum):
     TEMPERATURE = 0xd
     IE = 0x2f
@@ -394,23 +400,26 @@ cdef class CamDevice(object):
 
     def read_keys(self):
         cdef defs.scsi_per_res_in_keys *pdu
-        cdef uint32_t *generation
         buffer = bytearray(defs.SPRI_MAX_LEN)
 
         ccb = CamCCB(self)
         ccb.scsi_persistent_reserve_in(service_action=defs.SPRI_RK, data=buffer)
         ccb.send()
 
-        print('resid = {0}'.format(ccb.resid))
-        print('data = {0}'.format(buffer))
+        pdu = <defs.scsi_per_res_in_keys *><char *>buffer
+        generation = get_unaligned_be32(<void *>&pdu.header.generation)
 
-        pdu = <defs.scsi_per_res_in_keys *><void *>buffer
-        generation = <uint32_t *>&pdu.header.generation[0]
+        length = get_unaligned_be32(<void *>&pdu.header.length)
+        num_keys = int(length / 8)
+        keys = []
+        for i in range(num_keys):
+            start = sizeof(defs.scsi_per_res_in_header) + (i * 8)
+            keys.append(struct.unpack('>Q', buffer[start:start + 8])[0])
 
         return {
-            'generation': generation[0],
+            'generation': generation,
+            'keys': keys,
         }
-
 
     property bus_id:
         def __get__(self):

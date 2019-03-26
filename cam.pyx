@@ -111,6 +111,23 @@ class SCSIReadOp(enum.IntEnum):
     BIO = defs.SCSI_RW_BIO
 
 
+class SCSIPersistMode(enum.IntEnum):
+    CLEAR = defs.SPRO_CLEAR
+    REGISTER = defs.SPRO_REGISTER
+    REG_IGNORE = defs.SPRO_REG_IGNO
+    RELEASE = defs.SPRO_RELEASE
+    RESERVE = defs.SPRO_RESERVE
+
+
+class SCSIPersistType(enum.IntEnum):
+    READ_SHARED = defs.SPR_TYPE_RD_SHARED
+    WRITE_EXCLUSIVE = defs.SPR_TYPE_WR_EX
+    WRITE_EXCLUSIVE_AR = defs.SPR_TYPE_WR_EX_AR
+    READ_EXCLUSIVE = defs.SPR_TYPE_RD_EX
+    SHARED = defs.SPR_TYPE_SHARED
+
+
+
 class CCBFlags(enum.IntEnum):
     DIR_IN = defs.CAM_DIR_IN
 
@@ -299,7 +316,31 @@ cdef class CamCCB(object):
             )
 
     def scsi_persistent_reserve_out(self, **kwargs):
-        pass
+        cdef uint32_t c_retries = kwargs.pop('retries', 0)
+        cdef uint32_t c_timeout = kwargs.pop('timeout', 60 * 1000)
+        cdef int c_service_action = kwargs.pop('service_action')
+        cdef int c_res_type = kwargs.pop('restype', 0)
+        cdef uint8_t *c_data
+        cdef uint32_t c_dxfer_len
+
+        result = kwargs.pop('data')
+        c_data = <uint8_t *>result
+        c_dxfer_len = len(result)
+
+        with nogil:
+            defs.scsi_persistent_reserve_out(
+                &self.ccb.csio,
+                c_retries,
+                NULL,
+                defs.MSG_SIMPLE_Q_TAG,
+                c_service_action,
+                0,
+                c_res_type,
+                c_data,
+                c_dxfer_len,
+                defs.SSD_FULL_SIZE,
+                c_timeout
+            )
 
     #def scsi_format_unit(self, )
 
@@ -420,6 +461,15 @@ cdef class CamDevice(object):
             'generation': generation,
             'keys': keys,
         }
+
+    def scsi_prout(self, reskey=0, sa_reskey=0, mode=None, restype=SCSIPersistType.READ_SHARED):
+        data = bytearray()
+        data += struct.pack('>Q', reskey)
+        data += struct.pack('>Q', sa_reskey)
+        data += b'\x00' * 8
+        ccb = CamCCB(self)
+        ccb.scsi_persistent_reserve_out(service_action=mode.value, data=data, restype=restype.value)
+        ccb.send()
 
     property bus_id:
         def __get__(self):

@@ -439,12 +439,12 @@ cdef class CamDevice(object):
             if temp != 0xff:
                 return temp
 
-    def read_keys(self):
+    def read_keys(self, retries=0):
         cdef defs.scsi_per_res_in_keys *pdu
         buffer = bytearray(defs.SPRI_MAX_LEN)
 
         ccb = CamCCB(self)
-        ccb.scsi_persistent_reserve_in(service_action=defs.SPRI_RK, data=buffer)
+        ccb.scsi_persistent_reserve_in(service_action=defs.SPRI_RK, data=buffer, retries=retries)
         ccb.send()
 
         pdu = <defs.scsi_per_res_in_keys *><char *>buffer
@@ -462,13 +462,17 @@ cdef class CamDevice(object):
             'keys': keys,
         }
 
-    def scsi_prout(self, reskey=0, sa_reskey=0, mode=None, restype=SCSIPersistType.READ_SHARED):
+    def scsi_prout(
+        self, reskey=0, sa_reskey=0, mode=None, restype=SCSIPersistType.READ_SHARED, retries=0,
+    ):
         data = bytearray()
         data += struct.pack('>Q', reskey)
         data += struct.pack('>Q', sa_reskey)
         data += b'\x00' * 8
         ccb = CamCCB(self)
-        ccb.scsi_persistent_reserve_out(service_action=mode.value, data=data, restype=restype.value)
+        ccb.scsi_persistent_reserve_out(
+            service_action=mode.value, data=data, restype=restype.value, retries=retries,
+        )
         ccb.send()
 
     property bus_id:

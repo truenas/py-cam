@@ -189,12 +189,13 @@ cdef class CamCCB(object):
     def scsi_mode_sense(self, **kwargs):
         pass
 
-    def scsi_log_sense(self, retries=0, page=0, page_code=0, paramptr=0, save_pages=False, ppc=0, data=None):
+    def scsi_log_sense(self, retries=0, page=0, page_code=0, paramptr=0, save_pages=False, ppc=0, data=None, timeout=None):
         cdef uint32_t c_retries = retries
         cdef uint8_t c_page = page
         cdef uint8_t c_page_code = page_code
         cdef int c_save_pages = save_pages
         cdef int c_ppc = ppc
+        cdef uint32_t c_timeout = timeout or 5 * 1000
 
         cdef uint32_t c_param_ptr = paramptr
         cdef uint8_t *c_param_buf
@@ -216,7 +217,7 @@ cdef class CamCCB(object):
                 c_param_buf,
                 c_param_len,
                 defs.SSD_FULL_SIZE,
-                60 * 1000,
+                c_timeout,
             )
 
         self.send()
@@ -293,7 +294,7 @@ cdef class CamCCB(object):
 
     def scsi_persistent_reserve_in(self, **kwargs):
         cdef uint32_t c_retries = kwargs.pop('retries', 0)
-        cdef uint32_t c_timeout = kwargs.pop('timeout', 60 * 1000)
+        cdef uint32_t c_timeout = kwargs.pop('timeout', 5 * 1000)
         cdef int c_service_action = kwargs.pop('service_action')
         cdef uint8_t *c_data
         cdef uint32_t c_dxfer_len
@@ -317,7 +318,7 @@ cdef class CamCCB(object):
 
     def scsi_persistent_reserve_out(self, **kwargs):
         cdef uint32_t c_retries = kwargs.pop('retries', 0)
-        cdef uint32_t c_timeout = kwargs.pop('timeout', 60 * 1000)
+        cdef uint32_t c_timeout = kwargs.pop('timeout', 5 * 1000)
         cdef int c_service_action = kwargs.pop('service_action')
         cdef int c_res_type = kwargs.pop('restype', 0)
         cdef uint8_t *c_data

@@ -417,11 +417,8 @@ cdef class CamDevice(object):
                 while cur < length:
                     code = struct.unpack('>h', data[cur:cur + 2])[0]
                     cur += 2
-                    if code in (0, 1):
-                        if code == 0:
-                            return data[cur + 3]
-                    else:
-                        break
+                    if code == 0:
+                        return data[cur + 3]
                     cur += 4
             except OSError:
                 pass

@@ -403,39 +403,51 @@ cdef class CamDevice(object):
         if True:
             ccb = CamCCB(self)
             hdr_size = 4
+            inisize = 64
             try:
-                data = bytearray(hdr_size)
+                data = bytearray(inisize)
                 ccb.scsi_log_sense(page_code=SCSILogSense.TEMPERATURE.value, data=data)
                 length = struct.unpack('>H', data[2:4])[0]
                 if length == 0:
                     return
 
-                data = bytearray(hdr_size + length)
-                ccb.scsi_log_sense(page_code=SCSILogSense.TEMPERATURE.value, data=data)
+                if length + hdr_size > inisize:
+                    data = bytearray(hdr_size + length)
+                    ccb.scsi_log_sense(page_code=SCSILogSense.TEMPERATURE.value, data=data)
                 data = data[hdr_size:]
                 cur = 0
+                param_hdr_size = 4
                 while cur < length:
                     code = struct.unpack('>h', data[cur:cur + 2])[0]
-                    cur += 2
+                    param_length = struct.unpack('>B', data[cur + 3:cur + 4])[0]
                     if code == 0:
-                        return data[cur + 3]
-                    cur += 4
+                        return data[cur + 5]
+                    cur += param_hdr_size + param_length
             except OSError:
                 pass
 
-            data = bytearray(hdr_size)
+            data = bytearray(inisize)
             ccb.scsi_log_sense(page_code=SCSILogSense.IE.value, data=data)
             length = struct.unpack('>H', data[2:4])[0]
             if length == 0:
                 return
 
-            data = bytearray(hdr_size + length)
-            ccb.scsi_log_sense(page_code=SCSILogSense.IE.value, data=data)
+            if hdr_size + length > inisize:
+                data = bytearray(hdr_size + length)
+                ccb.scsi_log_sense(page_code=SCSILogSense.IE.value, data=data)
             data = data[hdr_size:]
-            temp = data[6]  # Most recent temperature reading
-            # Per spec 0xff is set when unable to read temperature
-            if temp != 0xff:
-                return temp
+            cur = 0
+            param_hdr_size = 4
+            while cur < length:
+                param_length = struct.unpack('>B', data[cur + 3:cur + 4])[0]
+                code = struct.unpack('>H', data[cur:cur + 2])[0]
+                if code == 0:
+                    temp = data[cur + 6]  # Most recent temperature reading
+                    # Per spec 0xff is set when unable to read temperature
+                    if temp != 0xff:
+                        return temp
+                    break
+                cur += param_hdr_size + param_length
 
     def read_keys(self, retries=0):
         cdef defs.scsi_per_res_in_keys *pdu

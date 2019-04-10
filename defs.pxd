@@ -149,6 +149,14 @@ cdef extern from "cam/scsi/scsi_all.h" nogil:
         SPRI_MAX_LEN
 
     enum:
+        SPRT_WE
+        SPRT_EA
+        SPRT_WERO
+        SPRT_EARO
+        SPRT_WEAR
+        SPRT_EAAR
+
+    enum:
         SPRO_REGISTER
         SPRO_RESERVE
         SPRO_RELEASE
@@ -206,6 +214,17 @@ cdef extern from "cam/scsi/scsi_all.h" nogil:
     cdef struct scsi_per_res_in_keys:
         scsi_per_res_in_header header
         scsi_per_res_key keys[0]
+
+    cdef struct scsi_per_res_in_rsrv_data:
+        uint8_t reservation[8]
+        uint8_t scope_addr[4]
+        uint8_t reserved
+        uint8_t scopetype
+        uint8_t extent_length[2]
+
+    cdef struct scsi_per_res_in_rsrv:
+        scsi_per_res_in_header header
+        scsi_per_res_in_rsrv_data data
 
     cdef struct scsi_per_res_out:
         uint8_t opcode

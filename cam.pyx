@@ -111,7 +111,12 @@ class SCSIReadOp(enum.IntEnum):
     BIO = defs.SCSI_RW_BIO
 
 
-class SCSIPersistMode(enum.IntEnum):
+class SCSIPersistInAction(enum.IntEnum):
+    KEYS = defs.SPRI_RK
+    RESERVATION = defs.SPRI_RR
+
+
+class SCSIPersistOutAction(enum.IntEnum):
     CLEAR = defs.SPRO_CLEAR
     PREEMPT = defs.SPRO_PREEMPT
     REGISTER = defs.SPRO_REGISTER
@@ -127,6 +132,14 @@ class SCSIPersistType(enum.IntEnum):
     READ_EXCLUSIVE = defs.SPR_TYPE_RD_EX
     SHARED = defs.SPR_TYPE_SHARED
 
+
+class SCSIPersistScopeType(enum.IntEnum):
+    WRITE_EXCLUSIVE = defs.SPRT_WE
+    EXCLUSIVE_ACCESS = defs.SPRT_EA
+    WRITE_EXCLUSIVE_REGONLY = defs.SPRT_WERO
+    EXCLUSIVE_ACCESS_REGONLY = defs.SPRT_EARO
+    WRITE_EXCLUSIVE_ALLREG = defs.SPRT_WEAR
+    EXCLUSIVE_ACCESS_ALLREG = defs.SPRT_EAAR
 
 
 class CCBFlags(enum.IntEnum):
@@ -450,13 +463,19 @@ cdef class CamDevice(object):
                     break
                 cur += param_hdr_size + param_length
 
-    def read_keys(self, retries=0):
+    def scsi_prin(self, action=None, retries=0):
         cdef defs.scsi_per_res_in_keys *pdu
         buffer = bytearray(defs.SPRI_MAX_LEN)
 
         ccb = CamCCB(self)
-        ccb.scsi_persistent_reserve_in(service_action=defs.SPRI_RK, data=buffer, retries=retries)
+        ccb.scsi_persistent_reserve_in(service_action=action.value, data=buffer, retries=retries)
         ccb.send()
+
+        return buffer
+
+    def read_keys(self, retries=0):
+
+        buffer = self.scsi_prin(action=SCSIPersistInAction.KEYS, retries=retries)
 
         pdu = <defs.scsi_per_res_in_keys *><char *>buffer
         generation = get_unaligned_be32(<void *>&pdu.header.generation)
@@ -473,8 +492,24 @@ cdef class CamDevice(object):
             'keys': keys,
         }
 
+    def read_reservation(self, retries=0):
+        buffer = self.scsi_prin(action=SCSIPersistInAction.RESERVATION, retries=retries)
+
+        pdu = <defs.scsi_per_res_in_rsrv *><char *>buffer
+        generation = get_unaligned_be32(<void *>&pdu.header.generation)
+
+        length = get_unaligned_be32(<void *>&pdu.header.length)
+        if not length:
+            return
+
+        return {
+            'generation': generation,
+            'reservation': struct.unpack('>Q', <bytes>pdu.data.reservation[0:8])[0],
+            'scopetype': SCSIPersistScopeType(pdu.data.scopetype),
+        }
+
     def scsi_prout(
-        self, reskey=0, sa_reskey=0, mode=None, restype=SCSIPersistType.READ_SHARED, retries=0,
+        self, reskey=0, sa_reskey=0, action=None, restype=SCSIPersistType.READ_SHARED, retries=0,
     ):
         data = bytearray()
         data += struct.pack('>Q', reskey)
@@ -482,7 +517,7 @@ cdef class CamDevice(object):
         data += b'\x00' * 8
         ccb = CamCCB(self)
         ccb.scsi_persistent_reserve_out(
-            service_action=mode.value, data=data, restype=restype.value, retries=retries,
+            service_action=action.value, data=data, restype=restype.value, retries=retries,
         )
         ccb.send()
 

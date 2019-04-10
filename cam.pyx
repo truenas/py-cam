@@ -113,6 +113,7 @@ class SCSIReadOp(enum.IntEnum):
 
 class SCSIPersistMode(enum.IntEnum):
     CLEAR = defs.SPRO_CLEAR
+    PREEMPT = defs.SPRO_PREEMPT
     REGISTER = defs.SPRO_REGISTER
     REG_IGNORE = defs.SPRO_REG_IGNO
     RELEASE = defs.SPRO_RELEASE

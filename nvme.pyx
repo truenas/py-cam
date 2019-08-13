@@ -1,5 +1,6 @@
+# cython: language_level=3, c_string_type=unicode, c_string_encoding=default
 #-
-# Copyright (c) 2014 iXsystems, Inc.
+# Copyright (c) 2019 iXsystems, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,54 +25,31 @@
 # SUCH DAMAGE.
 #
 
-import Cython.Compiler.Options
-Cython.Compiler.Options.annotate = True
+from libc cimport errno
+from libc.stdint cimport uint32_t
 import os
-from distutils.core import setup
-from distutils.extension import Extension
-from Cython.Build import cythonize
+from posix.ioctl cimport ioctl
 
 
-if 'FREEBSD_SRC' not in os.environ:
-    os.environ['FREEBSD_SRC'] = '/usr/src'
+cdef extern from "dev/nvme/nvme.h":
+    int NVME_GET_NSID
+
+    struct nvme_get_nsid:
+        char cdev[256]
+        uint32_t nsid
 
 
-system_includes = [
-    "${FREEBSD_SRC}/sys",
-]
+def get_nsid(path):
+    cdef nvme_get_nsid nsid
+    cdef int fd = os.open(path, os.O_RDONLY)
+    if fd == -1:
+        raise OSError(errno.errno, os.strerror(errno.errno), path)
+    try:
+        with nogil:
+            res = ioctl(fd, NVME_GET_NSID, &nsid)
+        if res == -1:
+            raise OSError(errno.errno, os.strerror(errno.errno), path)
 
-system_includes = [os.path.expandvars(x) for x in system_includes]
-
-
-extensions = [
-    Extension(
-        "cam",
-        ["cam.pyx"],
-        extra_link_args=["-lcam"],
-        include_dirs=system_includes
-    ),
-    Extension(
-        "ctl",
-        ["ctl.pyx"],
-        include_dirs=system_includes
-    ),
-    Extension(
-        "iscsi",
-        ["iscsi.pyx"],
-        include_dirs=system_includes
-    ),
-    Extension(
-        "nvme",
-        ["nvme.pyx"],
-        include_dirs=system_includes
-    ),
-]
-
-
-setup(
-    name='cam',
-    version='1.0',
-    packages=[''],
-    package_data={'': ['*.html', '*.c']},
-    ext_modules=cythonize(extensions)
-)
+        return nsid.cdev
+    finally:
+        os.close(fd)

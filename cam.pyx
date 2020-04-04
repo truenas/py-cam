@@ -102,6 +102,7 @@ cdef get_unaligned_be32(void *p):
 class SCSILogSense(enum.IntEnum):
     TEMPERATURE = 0xd
     IE = 0x2f
+    CUMULATIVE = 0x40
 
 
 class SCSIReadOp(enum.IntEnum):
@@ -203,7 +204,7 @@ cdef class CamCCB(object):
     def scsi_mode_sense(self, **kwargs):
         pass
 
-    def scsi_log_sense(self, retries=0, page=0, page_code=0, paramptr=0, save_pages=False, ppc=0, data=None, timeout=None):
+    def scsi_log_sense(self, retries=0, page=SCSILogSense.CUMULATIVE.value, page_code=0, paramptr=0, save_pages=False, ppc=0, data=None, timeout=None):
         cdef uint32_t c_retries = retries
         cdef uint8_t c_page = page
         cdef uint8_t c_page_code = page_code

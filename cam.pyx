@@ -164,7 +164,7 @@ cdef class CamCCB(object):
         cdef uint16_t c_sector_count = sector_count
         cdef uint8_t *c_data_ptr
         cdef uint16_t c_dxfer_len = len(data)
-        cdef uint32_t c_timeout = 5 * 1000
+        cdef uint32_t c_timeout = 30 * 1000
 
         with nogil:
             c_data_ptr = <uint8_t *>malloc(c_dxfer_len)
@@ -210,7 +210,7 @@ cdef class CamCCB(object):
         cdef uint8_t c_page_code = page_code
         cdef int c_save_pages = save_pages
         cdef int c_ppc = ppc
-        cdef uint32_t c_timeout = timeout or 5 * 1000
+        cdef uint32_t c_timeout = timeout or 60 * 1000
 
         cdef uint32_t c_param_ptr = paramptr
         cdef uint8_t *c_param_buf

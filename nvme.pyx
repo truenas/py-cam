@@ -105,7 +105,7 @@ def get_nsid(path):
         if res == -1:
             raise OSError(errno.errno, os.strerror(errno.errno), path)
 
-        return nsid.cdev
+        return nsid.cdev, nsid.nsid
     finally:
         os.close(fd)
 
